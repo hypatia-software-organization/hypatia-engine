@@ -76,7 +76,7 @@ class Game(object):
         for event in pygame.event.get():
 
             if event.type == KEYUP:
-                self.scene.human_player.walkabout.action = constants.Stand
+                self.scene.human_player.walkabout.action = constants.Action.Stand
             
             # need to trap player in a next loop, release when no next
             if event.type == KEYDOWN and event.key == K_SPACE:
@@ -98,16 +98,16 @@ class Game(object):
             return False
 
         if pressed_keys[K_UP]:
-            self.move_player(constants.Up)
+            self.move_player(constants.Direction.Up)
 
         if pressed_keys[K_RIGHT]:
-            self.move_player(constants.Right)
+            self.move_player(constants.Direction.Right)
 
         if pressed_keys[K_DOWN]:
-            self.move_player(constants.Down)
+            self.move_player(constants.Direction.Down)
 
         if pressed_keys[K_LEFT]:
-            self.move_player(constants.Left)
+            self.move_player(constants.Direction.Left)
 
         return True
 
@@ -122,7 +122,7 @@ class Game(object):
           Needs to use velocity instead...
 
         Args:
-          direction (constants.Direction): may be one of: up, right, down, left
+          direction (constants.Direction): may be one of: Up, Right, Down, Left
 
         """
 
@@ -142,13 +142,13 @@ class Game(object):
             if pixels == 2:
                 adj_speed = 1
 
-            if direction == constants.Up:
+            if direction == constants.Direction.Up:
                 new_topleft_y -= pixels * adj_speed
-            elif direction == constants.Right:
+            elif direction == constants.Direction.Right:
                 new_topleft_x += pixels * adj_speed
-            elif direction == constants.Down:
+            elif direction == constants.Direction.Down:
                 new_topleft_y += pixels * adj_speed
-            elif direction == constants.Left:
+            elif direction == constants.Direction.Left:
                 new_topleft_x -= pixels * adj_speed
 
             destination_rect = pygame.Rect((new_topleft_x, new_topleft_y),
@@ -158,7 +158,7 @@ class Game(object):
             if not self.collide_check(collision_rect):
                 # we're done, we can move!
                 new_topleft = (new_topleft_x, new_topleft_y)
-                player.walkabout.action = constants.Walk
+                player.walkabout.action = constants.Action.Walk
                 animation = player.walkabout.current_animation()
                 player.walkabout.size = animation.getMaxSize()
                 player.walkabout.rect = destination_rect
@@ -167,7 +167,7 @@ class Game(object):
                 return True
 
         # never found an applicable destination
-        player.walkabout.action = constants.Stand
+        player.walkabout.action = constants.Action.Stand
 
         return False
 

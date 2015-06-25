@@ -278,8 +278,8 @@ class Walkabout(object):
             file_name = os.path.split(file_name)[1]
 
             if file_name == 'only':
-                action = constants.Stand
-                direction = constants.Down
+                action = constants.Action.Stand
+                direction = constants.Direction.Down
 
             else:
                 action, direction = file_name.split('_', 1)
@@ -315,8 +315,8 @@ class Walkabout(object):
         self.size = animation.getMaxSize()
         self.rect = pygame.Rect(position, self.size)
         self.topleft_float = topleft_float
-        self.action = constants.Stand
-        self.direction = constants.Down
+        self.action = constants.Action.Stand
+        self.direction = constants.Direction.Down
         self.speed_in_pixels_per_second = 20.0
         self.child_walkabouts = children or []
 
@@ -332,7 +332,7 @@ class Walkabout(object):
 
         Examples:
           >>> walkabout = Walkabout()
-          >>> walkabout[constants.Walk][constants.Up]
+          >>> walkabout[constants.Action.Walk][constants.Direction.Up]
           <PygAnim Object>
 
         """
@@ -467,13 +467,13 @@ class Walkabout(object):
         """
 
         if len(self.animations) == 1:
-            actions = (constants.Stand,)
-            directions = (constants.Down,)
+            actions = (constants.Action.Stand,)
+            directions = (constants.Direction.Down,)
 
         else:
-            actions = (constants.Walk, constants.Stand)
-            directions = (constants.Up, constants.Down,
-                          constants.Left, constants.Right)
+            actions = (constants.Action.Walk, constants.Action.Stand)
+            directions = (constants.Direction.Up, constants.Direction.Down,
+                          constants.Direction.Left, constants.Direction.Right)
 
         for action in actions:
 
