@@ -20,15 +20,6 @@ Examples:
 
 from enum import Enum
 
-__author__ = "Lillian Lemmer"
-__copyright__ = "Copyright 2015, Lillian Lemmer"
-__credits__ = ["Lillian Lemmer"]
-__license__ = "MIT"
-__maintainer__ = "Lillian Lemmer"
-__email__ = "lillian.lynn.lemmer@gmail.com"
-__status__ = "Development"
-
-
 class Direction(Enum):
     """Specific to movement of a sprite/surface."""
     Up = 1

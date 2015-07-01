@@ -41,13 +41,6 @@ from hypatia import player
 from hypatia import sprites
 from hypatia import constants
 
-__author__ = "Lillian Lemmer"
-__copyright__ = "Copyright 2015, Lillian Lemmer"
-__credits__ = ["Lillian Lemmer"]
-__license__ = "MIT"
-__maintainer__ = "Lillian Lemmer"
-__email__ = "lillian.lynn.lemmer@gmail.com"
-__status__ = "Development"
 
 
 class Game(object):
