@@ -17,8 +17,6 @@ Example:
 """
 
 import os
-import zipfile
-from io import BytesIO
 
 import pygame
 import pytest
