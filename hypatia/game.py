@@ -481,7 +481,7 @@ class TMX(object):
             for row in rows:
                 # TMX tilesets start their ids at 1, Hypatia Tilesheets
                 # starts ids at 0.
-                cells = row.split(',')[:-1]  # trailing comma
+                cells = [i for i in row.split(',') if i] # trailing comma
                 parsed_row = [int(tile_id) - 1 for tile_id in cells]
                 parsed_rows.append(parsed_row)
 
