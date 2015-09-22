@@ -16,7 +16,7 @@ import pytest
 from hypatia import actor
 from hypatia import physics
 from hypatia import constants
-from hypatia import animations
+from hypatia import sprites
 
 try:
     os.chdir('demo')
@@ -70,7 +70,7 @@ def test_actor():
 
     """
 
-    walkabout = animations.Walkabout('debug')
+    walkabout = sprites.Walkabout('debug')
     velocity = physics.Velocity(10, 10)
     an_actor = actor.Actor(walkabout=walkabout,
                            say_text='Hello, world!',

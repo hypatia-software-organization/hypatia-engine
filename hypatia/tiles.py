@@ -22,9 +22,8 @@ import itertools
 
 import pygame
 
-from hypatia import util
-from hypatia import animations
-from hypatia import animatedsprite
+from hypatia import sprites
+from hypatia import resources
 
 
 class BadTileID(Exception):
@@ -366,7 +365,7 @@ class Tilesheet(object):
         """
 
         # path to the zip containing tilesheet.png and tilesheet.ini
-        resource = util.Resource('tilesheets', tilesheet_name)
+        resource = resources.Resource('tilesheets', tilesheet_name)
         zip_path = os.path.join(
                                 'resources',
                                 'tilesheets',
@@ -415,7 +414,7 @@ class Tilesheet(object):
 
                 # NOTE: outdated needs to use new anim sys
                 if next_tile_id in seen_tile_ids:
-                    tile_anim = (animatedsprite.
+                    tile_anim = (sprites.
                                  AnimatedSprite.
                                  from_surface_duration_list(frame_buffer))
                     animated_tiles[next_tile_id] = tile_anim
@@ -426,7 +425,7 @@ class Tilesheet(object):
 
         # functions which return a PygAnimation, and accept a surface
         if config.has_section('animate_effect'):
-            effects = {'cycle': animations.palette_cycle}
+            effects = {'cycle': sprites.palette_cycle}
 
             for tile_id, effect in config.items('animate_effect'):
                 tile_id = int(tile_id)
