@@ -19,8 +19,10 @@ Note:
 
 """
 
+import io
 import os
 import sys
+import traceback
 import xml.etree.ElementTree as ET
 
 try:
@@ -30,6 +32,7 @@ except ImportError:
     import configparser
 
 import pygame
+from pygame.locals import *
 
 from hypatia import tiles
 from hypatia import dialog
@@ -39,189 +42,168 @@ from hypatia import sprites
 from hypatia import physics
 from hypatia import resources
 from hypatia import constants
+from hypatia import exceptions
 from hypatia import controllers
 
+class Stage(object):
+    def __init__(self, parent):
+        self.parent = parent
+        self.surface = pygame.Surface(parent.scrn_size)
 
-class TMXException(Exception):
-    """Base class for all exceptions related to TMX.
-
-    See Also:
-        :class:`TMX`
-
-    """
-    pass
-
-
-class TMXMissingPlayerStartPosition(TMXException):
-    """TMX file parsed does not have a player start
-    position, which is required to create scenes.
-
-    See Also:
-        :class:`TMX`
-
-    """
-
-    def __init__(self):
-        message = "TMX file missing player_start_position"
-        super(TMXMissingPlayerStartPosition, self).__init__(message)
-
-
-class TMXTooManyTilesheets(TMXException):
-    """A TMX file was attempted to be imported through
-    `TileMap.from_tmx()`, but the TMX defined more than
-    one tilesheet. This is a feature Hypatia does not
-    support.
-
-    See Also:
-        :meth:`TileMap.from_tmx()` and :class:`TMX`.
-
-    """
-
-    def __init__(self):
-        """The exception message is this class' docstring.
-
-        Note:
-            Mostly scaffolding, plus won't be here for long.
-
+   def startup(self):
+        """Perform stage startup.
         """
 
-        message = TMXTooManyTilesheets.__docstring__
-        super(TMXTooManyTilesheets, self).__init__(message)
+        pass
 
-
-class TMXVersionUnsupported(TMXException):
-    """Attempted to create a TileMap from a TMX map, but
-    the TMX map version is unsupported.
-
-    Attribs:
-        map_version (str): the version which was attempted
-
-    """
-
-    def __init__(self, map_version):
+    def shutdown(self):
+        """Perform scene shutdown. Called before the stage is removed.
         """
 
-        Args:
-            map_version (str): the map version which is
-                unsupported. This becomes the map_version
-                attribute.
+       pass
 
+    def suspend(self):
+        """Suspend scene.
         """
 
-        message = 'version %s unsupported' % map_version
-        super(TMXVersionUnsupported, self).__init__(message)
-        self.map_version = map_version
+        pass
 
-
-class TMXLayersNotCSV(TMXException):
-    """The data encoding used for layers during Tilemap.from_tmx()
-    is not supported. Only CSV is supported.
-
-    Attribs:
-        data_encoding (str): the failed data encoding.
-
-    """
-
-    def __init__(self, data_encoding):
+    def update(self):
+        """Update the stage's surface. Upon resume from suspend, unsuspend
+        everything in here, too.
         """
 
-        Args:
-            data_encoding (str): the failed data encoding
+        pass
 
+    def handle_event(self, event):
+        """Handle a single pygame event for this stage.
         """
 
-        message = 'tmx layer data encoding %s unsupported' % data_encoding
-        super(TMXLayersNotCSV, self).__init__(message)
-        self.data_encodign = data_encoding
+        pass
 
+class ExceptionStage(Stage):
+    def startup(self):
+        self.renderables = []
+        font = pygame.font.SysFont("dejavusans,sans", 18)
 
-# not in use
-class Hypatia(object):
+        excinfo = io.BytesIO()
+        traceback.print_exc(limit=10, file=excinfo)
+        excinfo = excinfo.getvalue().decode('utf-8')
+        print(excinfo)
 
-    def __init__(self, **kwargs):
+        ypos = 8
+        for i in excinfo.splitlines():
+            c = font.render(i, True, (0, 0, 0))
+            self.renderables.append((c, (8, ypos)))
+            ypos += c.get_rect().height + 3
 
-        for key, value in kwargs.items():
-            setattr(self, key, value)
+    def update(self):
+        super(ExceptionStage, self).update()
+        self.surface.fill((159, 201, 235))
 
+        for i in self.renderables:
+            self.surface.blit(*i)
 
 class Game(object):
-    """Simulates the interaction between game components."""
+    def __init__(self, gameconfig):
+        """The base game object. This links all the components together,
+        and is automatically instantiated when Hypatia is loaded with your
+        game.
 
-    def __init__(self, screen=None, scene=None,
-                 viewport_size=None, dialogbox=None):
-
-        self.screen = screen or render.Screen()
-        self.viewport = render.Viewport(viewport_size)
-        self.dialogbox = dialogbox or dialog.DialogBox(self.viewport.rect.size)
-
-        # everything has been added, run runtime_setup() on each
-        # relevant item
-        self.scene = scene
-        self.scene.runtime_setup()
-        self.start_loop()
-
-    # will be removed
-    def old_render(self):
-        """Drawing behavior for game objects.
-
-        Parts of this should go to their respective classes, .e.g,
-        scene.
-
-        Needs to be updated to use sprite groups.
-
+        Args:
+          gameconfig (bytes): A bytestring of the game's configuration.
         """
 
-        first_tilemap_layer = self.scene.tilemap.layer_images[0]
-        self.viewport.center_on(self.scene.human_player.walkabout,
-                                first_tilemap_layer.get_rect())
-        self.viewport.blit(first_tilemap_layer)
-        self.scene.tilemap.blit_layer_animated_tiles(self.viewport, 0)
+        self.running = True
 
-        # render each npc walkabout
-        for npc in self.scene.npcs:
-            npc.walkabout.blit(
-                               self.screen.clock,
-                               self.viewport.surface,
-                               self.viewport.rect.topleft
-                              )
+        # load engine default config, then game config, then user config
+        self.config = configparser.ConfigParser()
+        self.config.readfp(io.BytesIO(constants.DEFAULT_CONFIG))
+        self.config.readfp(io.BytesIO(gameconfig))
 
-        # finally human and rest map layers last
-        self.scene.human_player.walkabout.blit(
-                                               self.screen.clock,
-                                               self.viewport.surface,
-                                               self.viewport.rect.topleft
-                                              )
+        self.stages = []
 
-        for i, layer in enumerate(self.scene.tilemap.layer_images[1:], 1):
-            self.viewport.blit(layer)
-            self.scene.tilemap.blit_layer_animated_tiles(self.viewport, i)
+        pygame.init()
+        self.clock = pygame.time.Clock()
+        self.ms_elapsed = 0
 
-        self.dialogbox.blit(self.viewport.surface)
+        displayinfo = pygame.display.Info()
+        self.phys_size = (displayinfo.current_w, displayinfo.current_h)
+        screen_size = self.config.get('display', 'resolution').split("x")
+        self.scrn_size = [int(i) for i in screen_size]
+        self.fullscreen = False
+        self.max_fps = self.config.getint('display', 'maxfps') 
 
-    def render(self):
-        """Drawing behavior for game objects.
+        # set up display itself
+        screenres = self.scrn_size
+        flags = DOUBLEBUF
 
-        Parts of this should go to their respective classes, .e.g,
-        scene.
+        if self.config.getboolean('display', 'fullscreen'):
+            self.fullscreen = True
+            screenres = self.screen_size
+            flags = FULLSCREEN | DOUBLEBUF
 
-        Needs to be updated to use sprite groups.
+        self.screen = pygame.display.set_mode(screenres, flags)
 
-        """
+    def update(self):
+        if len(self.stages) > 0:
+            try:
+                self.stages[-1].update()
 
-        self.scene.render(self.viewport, self.screen.clock)
-        self.dialogbox.blit(self.viewport.surface)
+            except Exception as e:
+                self.stage_jump(ExceptionStage)
 
-    def start_loop(self):
-        controller = controllers.WorldController(self)
+            surface = self.stages[-1].surface
 
-        while controller.handle_input():
-            controller.handle_input()
-            self.screen.update(self.viewport.surface)
-            self.render()
+        else:
+            surface = pygame.Surface(self.scrn_size)
+            surface.fill((51, 51, 51))
 
-        pygame.quit()
-        sys.exit()
+        if self.fullscreen:
+            surface = pygame.transform.scale(surface, self.screen_size)
 
+        self.screen.blit(surface, (0, 0))
+        pygame.display.flip()
+
+        self.ms_elapsed = self.clock.tick(self.max_fps)
+
+    def handle_events(self):
+        for event in pygame.event.get():
+            if len(self.stages) > 0:
+                try:
+                    self.stages[-1].handle_event(event)
+
+                except:
+                    self.stage_jump(ExceptionStage)                    
+
+            if event.type == QUIT: 
+                self.running = False 
+
+    def stage_jump(self, cls, *args):
+        for i in self.stages:
+            i.shutdown()
+
+        c = cls(self, *args)
+        c.startup()
+        self.stages = [c]
+
+    def stage_push(self, cls, *args):
+        if len(self.stages) > 0:
+            self.stages[-1].suspend()
+
+        c = cls(self, *args) 
+        c.startup()
+        self.stages.append(c)
+
+    def stage_pop(self):
+        if len(self.stages) > 0:
+            self.stages[-1].shutdown()
+            return self.stages.pop()
+
+    def main_loop(self):
+        while self.running:
+            self.handle_events()
+            self.update()
 
 class Scene(object):
     """A map with configuration data/meta, e.g., NPCs.
@@ -532,7 +514,7 @@ class TMX(object):
 
         if map_version != self.SUPPORTED:
 
-            raise TMXVersionUnsupported(map_version)
+            raise exceptions.TMXVersionUnsupported(map_version)
 
         # Get the Tilesheet (tileset) name from the tileset
         tileset_images = self.root.findall('.//tileset/image')
@@ -540,7 +522,7 @@ class TMX(object):
         if len(tileset_images) > 1:
 
             # too many tilesets!
-            raise TMXTooManyTilesheets()
+            raise exceptions.TMXTooManyTilesheets()
 
         tileset = self.root.find('.//tileset')
         tilesheet_name = tileset.attrib['name']
@@ -555,7 +537,7 @@ class TMX(object):
 
             if data_encoding != 'csv':
 
-                raise TMXLayersNotCSV(data_encoding)
+                raise exceptions.TMXLayersNotCSV(data_encoding)
 
             layer_csv = layer_data.text.strip()
             rows = layer_csv.split('\n')
@@ -600,4 +582,4 @@ class TMX(object):
         # should use xpath before loading all npcs...
         if self.player_start_position is None:
 
-            raise TMXMissingPlayerStartPosition()
+            raise exceptions.TMXMissingPlayerStartPosition()

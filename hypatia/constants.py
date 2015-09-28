@@ -28,6 +28,17 @@ See Also:
 
 import enum
 
+# The default game configuration.
+DEFAULT_CONFIG = b"""
+[game]
+name = Hypatia
+savedirname = hypatia
+
+[display]
+resolution = 800x600
+fullscreen = false
+maxfps = 60
+"""
 
 # Intentionally not using `enum.IntEnum` because there is no reason to
 # compare values of `Direction` to integers.

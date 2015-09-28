@@ -20,67 +20,6 @@ from pygame.locals import *
 
 from hypatia import constants
 
-
-class Screen(object):
-    """Everything blits to screen!
-
-    Notes:
-      --
-
-    CONSTANTS:
-      FPS (int): frames per second limit
-
-    Attributes:
-      clock (pygame.time.Clock):
-      time_elapsed_milliseconds (int): the time difference between
-        the two most recent frames/updates in milliseconds.
-      screen_size (tuple):
-      screen (pygame.display surface): --
-
-    """
-
-    FPS = 60
-
-    def __init__(self, filters=None):
-        """Will init pygame.
-
-        Args:
-          filters (list): list of functions which takes and
-            returns a surface.
-
-        """
-
-        pygame.init()
-        pygame.mouse.set_visible(False)
-        self.clock = pygame.time.Clock()
-        self.time_elapsed_milliseconds = 0
-        display_info = pygame.display.Info()
-        self.screen_size = (display_info.current_w, display_info.current_h)
-        self.screen = pygame.display.set_mode(
-                                              self.screen_size,
-                                              FULLSCREEN | DOUBLEBUF
-                                             )
-        self.filters = filters
-
-    def update(self, surface):
-        """Update the screen; apply surface to screen, automatically
-        rescaling for fullscreen.
-
-        """
-
-        scaled_surface = pygame.transform.scale(surface, self.screen_size)
-
-        if self.filters:
-
-            for filter_function in self.filters:
-                scaled_surface = filter_function(scaled_surface)
-
-        self.screen.blit(scaled_surface, (0, 0))
-        pygame.display.flip()
-        self.time_elapsed_milliseconds = self.clock.tick(Screen.FPS)
-
-
-# how much of this is redundant due to pygame Surface.scroll?
 class Viewport(object):
     """Display only a fixed area of a surface.
 

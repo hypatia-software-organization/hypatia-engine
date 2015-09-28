@@ -215,8 +215,8 @@ def install(ver=None):
     try:
         print("-> Installing Hypatia python dependencies")
 
-        py2install = "python%s -m pip install -r %s" % (pyver, os.path.join(path, "requirements", "python2.txt"))
-        py3install = "python%s -m pip install -r %s" % (pyver, os.path.join(path, "requirements", "base.txt"))
+        py2install = "python%s -m pip install --user -r %s" % (pyver, os.path.join(path, "requirements", "python2.txt"))
+        py3install = "python%s -m pip install --user -r %s" % (pyver, os.path.join(path, "requirements", "base.txt"))
 
         assert subprocess.call(py2install if pybasever == "2" else py3install, shell=True, stdout=sys.stdout, stderr=sys.stderr) == 0
 
@@ -228,7 +228,7 @@ def install(ver=None):
     try:
         print("-> Installing Hypatia")
 
-        assert subprocess.call(['python%s' % pyver, '-m', 'pip', 'install', path], stdout=sys.stdout, stderr=sys.stderr) == 0
+        assert subprocess.call(['python%s' % pyver, '-m', 'pip', 'install', '--user', path], stdout=sys.stdout, stderr=sys.stderr) == 0
 
     except:
         raise RuntimeError("Error installing Hypatia via pip")
