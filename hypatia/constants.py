@@ -1,3 +1,4 @@
+
 # This module is part of Hypatia and is released under the
 # MIT License: http://opensource.org/licenses/MIT
 
@@ -35,7 +36,9 @@ name = Hypatia
 savedirname = hypatia
 
 [display]
-resolution = 800x600
+screen_size = 320x240
+window_size = 800x600
+scaleup = true
 fullscreen = false
 maxfps = 60
 """
@@ -52,50 +55,28 @@ class Direction(enum.Enum):
     See Also:
         :class:`physics.Velocity`
 
-    Notes:
+    Note:
         I don't see a point in having a separate class for ordinal
         and cardinal classes.
-
-        When "order" of directions is referred to think of the
-        mnemonic "Never Eat Soggy Worms," for North, East, South,
-        and West. And specifically this is the order of the ordinal
-        and cardinal directions:
-
-          1. Direction.north
-          2. Direction.north_east
-          3. Direction.east
-          4. Direction.south_east
-          5. Direction.south
-          6. Direction.south_west
-          7. Direction.west
-          8. Direction.north_west
-
-        The attributes/enumerations which are cardinal directions
-        are powers of two because that avoids potential conflicts
-        with ordinal directions. The values for ordinal directions
-        are the addition of their cardinal components, e.g.,
-        `north_east` has the value of `north` plus `east. Defining
-        cardinal directions as powers of two avoids a problem by
-        which ordinal directoins could end up with same values
-        which would make equality comparisons true for directions
-        which should never be equal.
 
     """
 
     # Cardinal Directions
     #
-    # See: Direction.__docstring__ for elaboration
-    # on these values.
+    # The values for these directions are the powers of two because
+    # that avoids potential conflicts with ordinal directions.  The
+    # values for ordinal directions are the addition of their cardinal
+    # components, e.g. `north_east` has the value of `north` plus
+    # `east`.  Defining the cardinal directions as powers of two
+    # avoids a problem by which ordinal directions could end up with
+    # same values which would make equality comparisons true for
+    # directions which should never be equal.
     north = 1
     east = 2
     south = 4
     west = 8
 
     # Ordinal Directions
-    #
-    # The result of adding two cardinal directions
-    # together, e.g., north_east = 3 because
-    # north is 1 and east is 2, so 1 + 2 = 3.
     north_east = 3
     north_west = 9
     south_east = 6
@@ -105,38 +86,6 @@ class Direction(enum.Enum):
     north_south = 5
     east_west = 10
 
-    @staticmethod
-    def cardinals_and_ordinals():
-        """Returns all of the cardinal and ordinal directions.
-
-        Returns:
-            list: All of the cardinal and ordinal directions in order:
-                1. Direction.north
-                2. Direction.north_east
-                3. Direction.east
-                4. Direction.south_east
-                5. Direction.south
-                6. Direction.south_west
-                7. Direction.west
-                8. Direction.north_west
-
-        See Also:
-            Direction.__docstring__
-
-        """
-
-        return [
-                Direction.north,
-                Direction.north_east,
-                Direction.east,
-                Direction.south_east,
-                Direction.south,
-                Direction.south_west,
-                Direction.west,
-                Direction.north_west
-               ]
-
-    # NOTE: should be a static method?
     @classmethod
     def disposition(cls, direction, margin=1):
         """Position offset of "margin" pixels in
@@ -168,7 +117,6 @@ class Direction(enum.Enum):
 
         return dispositions[direction]
 
-    # NOTE: should be a static method?
     @classmethod
     def opposite(cls, direction):
         """Return the direction which is opposite of the
@@ -222,7 +170,6 @@ class Direction(enum.Enum):
 
         return opposites[direction]
 
-    # NOTE: should be static method?
     @classmethod
     def cardinal(cls):
         """Return a tuple of the cardinal directions in the order:
@@ -235,7 +182,6 @@ class Direction(enum.Enum):
 
         return (cls.north, cls.east, cls.south, cls.west)
 
-    # NOTE: should be static method?
     @classmethod
     def x_plus(cls):
         """Returns the direction associated
@@ -248,7 +194,6 @@ class Direction(enum.Enum):
 
         return cls.east
 
-    # NOTE: should be static method?
     @classmethod
     def x_minus(cls):
         """Returns the direction associated
@@ -261,7 +206,6 @@ class Direction(enum.Enum):
 
         return cls.west
 
-    # NOTE: should be static method?
     @classmethod
     def y_plus(cls):
         """Returns the direction associated
@@ -274,7 +218,6 @@ class Direction(enum.Enum):
 
         return cls.south
 
-    # NOTE: should be static method?
     @classmethod
     def y_minus(cls):
         """Returns the direction associated
@@ -390,19 +333,3 @@ class Action(enum.Enum):
     stand = 1
     walk = 2
 
-    @staticmethod
-    def all():
-        """Return all of the available actions.
-
-        Return:
-            list: List of all of the available actions,
-                which as of the time of writing this docstring
-                is simply `walk` and `stand`.
-
-        Note:
-            In the future this will be improved to be a classmethod,
-            in order to allow users to make their own custom actions.
-
-        """
-
-        return [Action.stand, Action.walk]
