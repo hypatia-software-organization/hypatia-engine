@@ -35,6 +35,7 @@ except ImportError:
 import pygame
 from pygame.locals import *
 
+from hypatia import util
 from hypatia import scene
 from hypatia import render
 from hypatia import constants
@@ -217,11 +218,16 @@ class ExceptionStage(Stage):
         ypos = 8
 
         # the exception info goes here
-        # TODO: make this work for line wrapping, it just overflows currently
         exctype, excval = sys.exc_info()[:2]
-        t = frender(font, "%s: %s" % (exctype.__name__, excval.message))
-        self.renderables.append((t, (8, ypos)))
-        ypos += t.get_rect().height + 8
+        text = exctype.__name__
+        if 'message' in dir(excval):
+            text = "%s: %s" % (exctype.__name__, excval.message)
+
+        lines = util.wrapline(text, font, self.parent.screen_size[0] - 16)
+        for line in lines:
+            t = frender(font, line)
+            self.renderables.append((t, (8, ypos)))
+            ypos += t.get_rect().height + 8
 
         # format the full traceback and put that into a surface that we can
         # scroll through on the exception info. maybe use Viewport?
@@ -230,7 +236,6 @@ class ExceptionStage(Stage):
 
         excsurface = pygame.Surface((self.parent.screen_size[0] - 16, 1000))
         excypos = 0
-        excinfo = "y\n" * 100 # TODO: This is here to test scrolling, remove
         for i in excinfo.splitlines()[:-1]:
             t = frender(font, i)
             excsurface.blit(t, (0, excypos))
