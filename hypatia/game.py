@@ -29,6 +29,7 @@ from pygame.locals import *
 from hypatia import config
 from hypatia import state
 
+
 class Game(object):
     def __init__(self, vfs):
         """The base game object. This links all the components together,
@@ -72,7 +73,7 @@ class Game(object):
 
         self.fullscreen = self.config.getboolean('display', 'fullscreen')
         self.scaleup = self.config.getboolean('display', 'scaleup')
-        self.max_fps = self.config.getint('display', 'maxfps') 
+        self.max_fps = self.config.getint('display', 'maxfps')
 
         # set up display itself
         screenres = self.screen_size
@@ -89,8 +90,8 @@ class Game(object):
         self.screen = pygame.display.set_mode(screenres, flags)
 
     def update(self):
-        """Updates the display. This calls the current state's 
-        :func:`~hypatia.state.State.update` method, and handles any exceptions
+        """Updates the display. This calls the current state's
+        :meth:`hypatia.state.State.update` method, and handles any exceptions
         that may arise running the update method.
         """
 
@@ -119,7 +120,7 @@ class Game(object):
 
     def handle_events(self):
         """Handle pygame events, passing them down to the current state's
-        :func:`~hypatia.state.State.handle_event()` method.
+        :meth:`hypatia.state.State.handle_event` method.
         """
 
         for event in pygame.event.get():
@@ -130,14 +131,14 @@ class Game(object):
                 except:
                     self.state_jump(state.ExceptionDisplayState)
 
-            if event.type == QUIT: 
-                self.running = False 
+            if event.type == QUIT:
+                self.running = False
 
     def state_jump(self, cls, *args):
         """Jumps to a new state, clearing the previous state stack.
 
         Arguments:
-            cls (State): State class to jump to 
+            cls (State): State class to jump to
             *args: Arguments to pass to the state class
         """
 
@@ -168,7 +169,7 @@ class Game(object):
             if len(self.states) > 0:
                 self.states[-1].suspend()
 
-            c = cls(self, *args) 
+            c = cls(self, *args)
             c.startup()
             self.states.append(c)
 

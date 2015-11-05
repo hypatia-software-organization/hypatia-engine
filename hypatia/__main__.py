@@ -8,6 +8,7 @@ v.mount("/game", prov)
 
 g = hypatia.game.Game(v)
 
+
 class TestState(hypatia.state.State):
     def update(self):
         raise RuntimeError("This is a test!")

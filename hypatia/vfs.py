@@ -3,26 +3,32 @@ import io
 import pkgutil
 import threading
 
+
 class VFSException(Exception):
     pass
+
 
 class MountPointInUseException(VFSException):
     pass
 
+
 class IsADirectoryException(VFSException):
     pass
+
 
 class NotADirectoryException(VFSException):
     pass
 
+
 class FileNotFoundException(VFSException):
     pass
+
 
 class VFS(object):
     PATH_SEPARATOR = "/"
 
     def __init__(self):
-        self._lock = threading.RLock() 
+        self._lock = threading.RLock()
         self._mountpoints = {}
 
     def mount(self, mountpoint, provider):
@@ -46,7 +52,7 @@ class VFS(object):
             mountpoint (str): Mountpoint to unmount
         """
 
-        if not mountpoint in self._mountpoints:
+        if mountpoint not in self._mountpoints:
             return
 
         del self._mountpoints[mountpoint]
@@ -72,9 +78,11 @@ class VFS(object):
         if path.startswith(self.PATH_SEPARATOR):
             path = path[len(self.PATH_SEPARATOR):]
 
-        # Split path into directory pieces and remove empty or redundant directories.
-        pieces = [ piece for piece in path.split(self.PATH_SEPARATOR)
-                   if piece and piece != '.' ]
+        # Split path into directory pieces and remove empty or redundant
+        # directories.
+
+        pieces = [piece for piece in path.split(self.PATH_SEPARATOR)
+                  if piece and piece != '.']
 
         # Remove parent directory entries.
         while '..' in pieces:
@@ -129,7 +137,7 @@ class VFS(object):
     def list(self, path):
         """Return a list of the files in the given directory path.
 
-        Returns: 
+        Returns:
             a list of dictionaries, one for each file/directory in the
             target directory, of the following format::
 
@@ -180,7 +188,7 @@ class VFS(object):
 
         # TODO: Support read/write access, file modes. Implement this with a
         # File object that controls read/writing to the provider. See the
-        # rave project's File class for details on how this should be 
+        # rave project's File class for details on how this should be
         # implemented.
 
         spath = self.split(path)
@@ -195,6 +203,7 @@ class VFS(object):
                 return self._mountpoints[lookpath].open(spath[len(looked):])
 
         raise FileNotFoundException(path)
+
 
 class VFSProvider(object):
     def __init__(self):
@@ -235,7 +244,7 @@ class VFSProvider(object):
     def list(self, spath):
         """Return a list of the files in the given directory path.
 
-        Returns: 
+        Returns:
             a list of dictionaries, one for each file/directory in the
             target directory, of the following format::
 
@@ -307,6 +316,7 @@ class VFSProvider(object):
 
         pass
 
+
 class FilesystemProvider(VFSProvider):
     def __init__(self, path):
         """A VFS provider that takes files from the local file system.
@@ -327,7 +337,7 @@ class FilesystemProvider(VFSProvider):
 
             nest = self._contents
             for fragment in sroot:
-                if not fragment in nest["children"]:
+                if fragment not in nest["children"]:
                     nest["children"][fragment] = {
                         "isdir": True,
                         "children": {},
@@ -345,4 +355,3 @@ class FilesystemProvider(VFSProvider):
                     "isdir": False,
                     "contents": io.BytesIO(contents),
                 }
-

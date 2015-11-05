@@ -1,5 +1,6 @@
 from hypatia import config
 
+
 def test_config():
     """Test the default configuration.
     """

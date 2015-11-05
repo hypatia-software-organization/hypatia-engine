@@ -7,14 +7,15 @@ from hypatia import util
 
 
 class State(object):
+    """Defines a game state. This could be a menu, the game interaction
+    itself, or something else.
+
+    Arguments:
+        parent (Game): The game that this State belongs to
+
+    """
+
     def __init__(self, parent):
-        """Defines a game state. This could be a menu, the game interaction
-        itself, or something else.
-
-        Arguments:
-            parent (Game): The game that this State belongs to
-        """
-
         self.parent = parent
         self.surface = pygame.Surface(parent.screen_size)
 
@@ -58,6 +59,7 @@ class State(object):
 
         pass
 
+
 class ExceptionDisplayState(State):
     """This state displays exceptions that may arise during the game.
 
@@ -69,10 +71,12 @@ class ExceptionDisplayState(State):
 
         fontstack = "dejavusans,sans"
         font = pygame.font.SysFont(fontstack, 16)
-        frender = lambda f, t: f.render(t, True, (255, 255, 255))
 
-        ypos = 8 # initial padding on the top
-        
+        def frender(font, text):
+            font.render(text, True, (255, 255, 255))
+
+        ypos = 8  # initial padding on the top
+
         # get the exception stacktrace and print it to the console
         excinfo = traceback.format_exc()
         print(excinfo)
@@ -82,7 +86,7 @@ class ExceptionDisplayState(State):
 
         # wrap lines of the stacktrace, add them all to exclines
         exclines = []
-        exclineheight = 0 # this gets set to the maximum line-height
+        exclineheight = 0  # this gets set to the maximum line-height
 
         for i in excinfo.splitlines():
             for line in util.wrapline(i, font, surfacewidth):
@@ -92,13 +96,13 @@ class ExceptionDisplayState(State):
         # calculate the size of the surface we need to create
         excsurfacesize = (
             surfacewidth,
-            len(exclines) * (exclineheight + 8) # the + 8 is line padding
+            len(exclines) * (exclineheight + 8)  # the + 8 is line padding
             )
 
         # actually create the surface and blit the lines to it
         self.excsurface = pygame.Surface(excsurfacesize)
         self.excsurface.fill((51, 51, 51))
-        
+
         for i, l in enumerate(exclines):
             self.excsurface.blit(l, (0, i * (exclineheight + 8)))
 
@@ -109,7 +113,7 @@ class ExceptionDisplayState(State):
 
         displaysurfacesize = (
             self.parent.screen_size[0] - 16,
-            self.parent.screen_size[1] - 16 - 48 # allow for buttons
+            self.parent.screen_size[1] - 16 - 48  # allow for buttons
         )
 
         self.displaysurface = pygame.Surface(displaysurfacesize)
@@ -129,17 +133,19 @@ class ExceptionDisplayState(State):
             elif event.key == K_PAGEUP:
                 self.scrollpos += 100
 
-        """
-        elif event.type == MOUSEBUTTONDOWN:    
+        elif event.type == MOUSEBUTTONDOWN:
             if viewportrect.collidepoint(event.pos):
                 # event.button: 4 is scrollup, 5 is scrolldown
-                pass
-        """
+                if event.button == 4:
+                    self.scrollpos += 100
+
+                if event.button == 5:
+                    self.scrollpos -= 100
 
         # sanity checks to make sure we haven't scrolled off-screen
 
-        maxdownscroll = (self.excsurface.get_rect().height - 
-            self.displaysurface.get_rect().height)
+        maxdownscroll = (self.excsurface.get_rect().height -
+                         self.displaysurface.get_rect().height)
 
         if self.scrollpos < -maxdownscroll:
             self.scrollpos = -maxdownscroll
@@ -147,10 +153,9 @@ class ExceptionDisplayState(State):
         if self.scrollpos > 0:
             self.scrollpos = 0
 
-
     def update(self):
         super(ExceptionDisplayState, self).update()
-        
+
         self.displaysurface.fill((51, 51, 51))
         self.displaysurface.blit(self.excsurface, (0, self.scrollpos))
         self.surface.blit(self.displaysurface, (8, 8))
