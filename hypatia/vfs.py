@@ -6,21 +6,17 @@ import threading
 class VFSException(Exception):
     pass
 
-class MountPointInUse(VFSException):
-    def __init__(self, path):
-        self.path = path
+class MountPointInUseException(VFSException):
+    pass
 
-class IsADirectory(VFSException):
-    def __init__(self, path):
-        self.path = path
+class IsADirectoryException(VFSException):
+    pass
 
-class NotADirectory(VFSException):
-    def __init__(self, path):
-        self.path = path
+class NotADirectoryException(VFSException):
+    pass
 
-class FileNotFound(VFSException):
-    def __init__(self, path):
-        self.path = path
+class FileNotFoundException(VFSException):
+    pass
 
 class VFS(object):
     PATH_SEPARATOR = "/"
@@ -33,21 +29,21 @@ class VFS(object):
         """Mount the given provider at the specified mountpoint.
 
         Args:
-          mountpoint (str): Mountpoint to use
-          provider (hypatia.vfs.VFSProvider): Provider to mount
+            mountpoint (str): Mountpoint to use
+            provider (hypatia.vfs.VFSProvider): Provider to mount
         """
 
         if mountpoint in self._mountpoints:
-            raise MountPointInUse(mountpoint)
+            raise MountPointInUseException(mountpoint)
 
         self._mountpoints[mountpoint] = provider
-        self._mountpoints[mountpoint]._cache_files()
+        self._mountpoints[mountpoint].cache_files()
 
     def unmount(self, mountpoint):
         """Unmount a provider from the given mountpoint.
 
         Args:
-          mountpoint (str): Mountpoint to unmount
+            mountpoint (str): Mountpoint to unmount
         """
 
         if not mountpoint in self._mountpoints:
@@ -56,9 +52,22 @@ class VFS(object):
         del self._mountpoints[mountpoint]
 
     def split(self, path):
+        """Split a path into it's parts.
+
+        Returns:
+            list: The parts of the path
+        """
+
         return self.normalize(path).split(self.PATH_SEPARATOR)
 
     def normalize(self, path):
+        """Normalize a path.
+
+        Examples:
+            >>> normalize("/path/../otherpath")
+            ['otherpath']
+        """
+
         # Remove root.
         if path.startswith(self.PATH_SEPARATOR):
             path = path[len(self.PATH_SEPARATOR):]
@@ -81,7 +90,7 @@ class VFS(object):
         """Returns whether or not the given path is a directory.
 
         Args:
-          path (str): Path to check
+            path (str): Path to check
         """
 
         spath = self.split(path)
@@ -100,8 +109,8 @@ class VFS(object):
     def isfile(self, path):
         """Returns whether or not the given path is a file.
 
-        Args:
-          path (str): Path to check
+        Arguments:
+            path (str): Path to check
         """
 
         spath = self.split(path)
@@ -118,8 +127,16 @@ class VFS(object):
         return False
 
     def list(self, path):
-        """Returns a list of the files and subdirectories in the given path,
-        including whether the given path is a file or directory.
+        """Return a list of the files in the given directory path.
+
+        Returns: 
+            a list of dictionaries, one for each file/directory in the
+            target directory, of the following format::
+
+                {
+                    "name": "filename",
+                    "isdir": False,
+                }
         """
 
         spath = self.split(path)
@@ -177,10 +194,15 @@ class VFS(object):
             if lookpath in self._mountpoints:
                 return self._mountpoints[lookpath].open(spath[len(looked):])
 
-        raise FileNotFound(path)
+        raise FileNotFoundException(path)
 
 class VFSProvider(object):
     def __init__(self):
+        """A base virtual filesystem provider. This class on it's own does not
+        store any files, it must be subclassed and the `cache_files()`
+        function implemented in the subclass.
+        """
+
         # _contents = {
         #     "dirname": {
         #         "isdir": True,
@@ -195,26 +217,44 @@ class VFSProvider(object):
         self._contents = {"isdir": True, "children": {}}
 
     def isdir(self, spath):
+        """Returns whether or not the path given is a directory.
+
+        Returns:
+            bool: Whether or not the path is a directory
+        """
         dir = self._contents
 
         for fragment in spath:
             if fragment not in dir["children"]:
-                raise FileNotFound(VFS.PATH_SEPARATOR.join(spath))
+                raise FileNotFoundException(VFS.PATH_SEPARATOR.join(spath))
 
             dir = dir["children"][fragment]
 
         return dir["isdir"]
 
     def list(self, spath):
+        """Return a list of the files in the given directory path.
+
+        Returns: 
+            a list of dictionaries, one for each file/directory in the
+            target directory, of the following format::
+
+                {
+                    "name": "filename",
+                    "isdir": False,
+                }
+
+        """
+
         dir = self._contents
         for fragment in spath:
             if fragment not in dir["children"]:
-                raise FileNotFound(VFS.PATH_SEPARATOR.join(spath))
+                raise FileNotFoundException(VFS.PATH_SEPARATOR.join(spath))
 
             dir = dir["children"][fragment]
 
         if not dir["isdir"]:
-            raise NotADirectory(VFS.PATH_SEPARATOR.join(spath))
+            raise NotADirectoryException(VFS.PATH_SEPARATOR.join(spath))
 
         out = []
         for i in dir["children"].keys():
@@ -226,6 +266,12 @@ class VFSProvider(object):
         return out
 
     def exists(self, spath):
+        """Determines whether or not the path given exists in the filesystem.
+
+        Returns:
+            bool: Whether or not the path exists
+        """
+
         dir = self._contents
 
         for fragment in spath:
@@ -237,27 +283,45 @@ class VFSProvider(object):
         return True
 
     def open(self, spath):
+        """Open a file from the virtual file system.
+
+        Returns:
+            io.BytesIO: a file-like object
+        """
+
         dir = self._contents
         for fragment in spath:
             if fragment not in dir["children"]:
-                raise FileNotFound(VFS.PATH_SEPARATOR.join(spath))
+                raise FileNotFoundException(VFS.PATH_SEPARATOR.join(spath))
 
             dir = dir["children"][fragment]
 
         if dir["isdir"]:
-            raise IsADirectory(path)
+            raise IsADirectoryException(path)
 
         return dir["contents"]
 
-    def _cache_files(self):
+    def cache_files(self):
+        """Cache files in the filesystem.
+        """
+
         pass
 
 class FilesystemProvider(VFSProvider):
     def __init__(self, path):
+        """A VFS provider that takes files from the local file system.
+
+        Arguments:
+            path (str): The path to load files from
+        """
+
         super(FilesystemProvider, self).__init__()
         self._path = os.path.abspath(path)
 
-    def _cache_files(self):
+    def cache_files(self):
+        """Caches files from the local file system.
+        """
+
         for root, dirs, files in os.walk(self._path):
             sroot = root[len(self._path):].split(os.sep)[1:]
 
@@ -274,7 +338,7 @@ class FilesystemProvider(VFSProvider):
             for file in files:
                 path = os.path.join(self._path, *sroot)
                 path = os.path.join(path, file)
-                with open(path, 'r') as fh:
+                with open(path, 'rb') as fh:
                     contents = fh.read()
 
                 nest["children"][file] = {
