@@ -24,6 +24,7 @@ maxfps = 60
 """
 """The default game configuration."""
 
+
 def create_config():
     """Creates a ConfigParser instance with the default configuration
     loaded into it.
