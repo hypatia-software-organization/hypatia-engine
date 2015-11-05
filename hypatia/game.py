@@ -21,24 +21,13 @@ Note:
 
 import io
 import os
-import sys
-import traceback
 import tempfile
 import datetime
-
-try:
-    import ConfigParser as configparser
-
-except ImportError:
-    import configparser
-
 import pygame
 from pygame.locals import *
 
-from hypatia import util
-from hypatia import scene
-from hypatia import render
-from hypatia import constants
+from hypatia import config
+from hypatia import state
 
 class Game(object):
     def __init__(self, vfs):
@@ -53,12 +42,13 @@ class Game(object):
         self.running = True
         self.vfs = vfs
 
-        # load engine default config, then game config, then user config
-        self.config = configparser.ConfigParser()
-        self.config.readfp(io.BytesIO(constants.DEFAULT_CONFIG))
-        self.config.readfp(self.vfs.open("/game/game.ini"))
+        # create our config object and load the game config into it
+        self.config = config.create_config()
 
-        self.stages = []
+        cfgdata = self.vfs.open("/game/game.ini").read().decode('utf-8')
+        self.config.readfp(io.StringIO(cfgdata))
+
+        self.states = []
 
         pygame.init()
         self.clock = pygame.time.Clock()
@@ -70,6 +60,10 @@ class Game(object):
         self.update_screen_size()
 
     def update_screen_size(self):
+        """Updates the screen size to the values stored in the current
+        configuration.
+        """
+
         screen_size = self.config.get('display', 'screen_size')
         self.screen_size = [int(i) for i in screen_size.split('x')]
 
@@ -95,14 +89,19 @@ class Game(object):
         self.screen = pygame.display.set_mode(screenres, flags)
 
     def update(self):
-        if len(self.stages) > 0:
+        """Updates the display. This calls the current state's 
+        :func:`~hypatia.state.State.update` method, and handles any exceptions
+        that may arise running the update method.
+        """
+
+        if len(self.states) > 0:
             try:
-                self.stages[-1].update()
+                self.states[-1].update()
 
             except Exception as e:
-                self.stage_jump(ExceptionStage)
+                self.state_jump(state.ExceptionDisplayState)
 
-            surface = self.stages[-1].surface
+            surface = self.states[-1].surface
 
         else:
             surface = pygame.Surface(self.screen_size)
@@ -119,160 +118,81 @@ class Game(object):
         self.ms_elapsed = self.clock.tick(self.max_fps)
 
     def handle_events(self):
+        """Handle pygame events, passing them down to the current state's
+        :func:`~hypatia.state.State.handle_event()` method.
+        """
+
         for event in pygame.event.get():
-            if len(self.stages) > 0:
+            if len(self.states) > 0:
                 try:
-                    self.stages[-1].handle_event(event)
+                    self.states[-1].handle_event(event)
 
                 except:
-                    self.stage_jump(ExceptionStage)                    
+                    self.state_jump(state.ExceptionDisplayState)
 
             if event.type == QUIT: 
                 self.running = False 
 
-    def stage_jump(self, cls, *args):
-        for i in self.stages:
-            i.shutdown()
+    def state_jump(self, cls, *args):
+        """Jumps to a new state, clearing the previous state stack.
 
-        c = cls(self, *args)
-        c.startup()
-        self.stages = [c]
+        Arguments:
+            cls (State): State class to jump to 
+            *args: Arguments to pass to the state class
+        """
 
-    def stage_push(self, cls, *args):
-        if len(self.stages) > 0:
-            self.stages[-1].suspend()
+        try:
+            for i in self.states:
+                i.shutdown()
 
-        c = cls(self, *args) 
-        c.startup()
-        self.stages.append(c)
+            c = cls(self, *args)
+            c.startup()
+            self.states = [c]
 
-    def stage_pop(self):
-        if len(self.stages) > 0:
-            self.stages[-1].shutdown()
-            return self.stages.pop()
+        except:
+            if cls == state.ExceptionDisplayState:
+                raise
+
+            self.state_jump(state.ExceptionDisplayState)
+
+    def state_push(self, cls, *args):
+        """Pushes a new state onto the top of the state stack. This
+        becomes the active state.
+
+        Arguments:
+            cls (State): State class to push
+            *args: Arguments to pass to the state class
+        """
+
+        try:
+            if len(self.states) > 0:
+                self.states[-1].suspend()
+
+            c = cls(self, *args) 
+            c.startup()
+            self.states.append(c)
+
+        except:
+            self.state_jump(state.ExceptionDisplayState)
+
+    def state_pop(self):
+        """Pops the current state off the stack, returning control
+        to the previous state on the stack.
+        """
+
+        try:
+            if len(self.states) > 0:
+                self.states[-1].shutdown()
+                self.states.pop()
+                self.states[-1].resume()
+
+        except:
+            self.state_jump(state.ExceptionDisplayState)
 
     def main_loop(self):
+        """Runs the game.
+        """
+
         while self.running:
             self.handle_events()
             self.update()
-
-class Stage(object):
-    def __init__(self, parent):
-        self.parent = parent
-        self.surface = pygame.Surface(parent.screen_size)
-
-    def startup(self):
-        """Perform stage startup.
-        """
-
-        pass
-
-    def shutdown(self):
-        """Perform scene shutdown. Called before the stage is removed.
-        """
-
-        pass
-
-    def suspend(self):
-        """Suspend scene.
-        """
-
-        pass
-
-    def update(self):
-        """Update the stage's surface. Upon resume from suspend, unsuspend
-        everything in here, too.
-        """
-
-        pass
-
-    def handle_event(self, event):
-        """Handle a single pygame event for this stage.
-        """
-
-        pass
-
-class GameStage(Stage):
-    """The stage that handles displaying tilemaps and dealing with user
-    interaction.
-    """
-
-    def __init__(self, parent, scene):
-        super(GameStage, self).__init__(parent)
-        self.scene = scene
-
-    def startup(self):
-        # Assume that the scene we were given has the tilemap and everything
-        # already loaded, so just do runtime setup and display stuff in here
-
-        pass
-
-class ExceptionStage(Stage):
-    def startup(self):
-        self.renderables = []
-
-        fontstack = "dejavusans,sans"
-        font = pygame.font.SysFont(fontstack, 22)
-        frender = lambda f, t: f.render(t, True, (255, 255, 255))
-
-        ypos = 8
-
-        # the exception info goes here
-        exctype, excval = sys.exc_info()[:2]
-        text = exctype.__name__
-        if 'message' in dir(excval):
-            text = "%s: %s" % (exctype.__name__, excval.message)
-
-        lines = util.wrapline(text, font, self.parent.screen_size[0] - 16)
-        for line in lines:
-            t = frender(font, line)
-            self.renderables.append((t, (8, ypos)))
-            ypos += t.get_rect().height + 8
-
-        # format the full traceback and put that into a surface that we can
-        # scroll through on the exception info. maybe use Viewport?
-        excinfo = traceback.format_exc()
-        print(excinfo)
-
-        excsurface = pygame.Surface((self.parent.screen_size[0] - 16, 1000))
-        excypos = 0
-        for i in excinfo.splitlines()[:-1]:
-            t = frender(font, i)
-            excsurface.blit(t, (0, excypos))
-            excypos += t.get_rect().height + 4
-
-        # save on dat memory by clipping down the generated surface
-        newsize = (self.parent.screen_size[0] - 16, excypos)
-        self.excsurface = pygame.Surface(newsize)
-        self.excsurface.blit(excsurface, (0, 0))
-        del excsurface 
-
-        viewportsize = (self.parent.screen_size[0] - 16,
-                        self.parent.screen_size[1] - ypos - 64)
-
-        self.excviewport = render.Viewport(viewportsize)
-        self.excviewportpos = (8, ypos)
-
-    def handle_event(self, event):
-        if event.type == MOUSEBUTTONDOWN:
-            viewportrect = self.excviewport.rect.move(self.excviewportpos)
-            if viewportrect.collidepoint(event.pos):
-                # event.button: 4 is scrollup, 5 is scrolldown
-
-                if event.button == 4 and self.excviewport.rect.y > 0:
-                    self.excviewport.rect.move_ip(0, -10)
-
-                if event.button == 5:
-                    height = self.excviewport.rect.y + self.excviewport.rect.height
-                    if height < self.excsurface.get_rect().height:
-                        self.excviewport.rect.move_ip(0, 10)
-
-    def update(self):
-        super(ExceptionStage, self).update()
-        self.surface.fill((51, 51, 51))
-
-        for i in self.renderables:
-            self.surface.blit(*i)
-
-        self.excviewport.blit(self.excsurface)
-        self.surface.blit(self.excviewport.surface, self.excviewportpos)
