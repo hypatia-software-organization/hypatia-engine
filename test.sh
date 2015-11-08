@@ -52,7 +52,7 @@ PAGER="${PAGER:=more}"
 "$PIP" uninstall hypatia_engine -y
 pandoc README.md -t rst -o PKG-INFO
 "$PYTHON" setup.py check -r -s
-"$PIP" install --user --no-cache-dir .
+"$PIP" install --user --no-cache-dir --upgrade --force-reinstall .
 rm PKG-INFO
 py.test tests --pep8 --doctest-modules hypatia -v --cov-report term-missing --cov=hypatia | "$PAGER"
 cd demo

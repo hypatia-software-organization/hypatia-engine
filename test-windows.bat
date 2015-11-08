@@ -13,8 +13,8 @@ read -p "Press [Enter] to uninstall then install hypatia_engine..."
 py -2 -m pip uninstall hypatia_engine -y
 py -3 -m pip uninstall hypatia_engine -y
 # install
-py -2 -m pip install --user --no-cache-dir .
-py -3 -m pip install --user --no-cache-dir .
+py -2 -m pip install --user --no-cache-dir -r requirements/python2.txt .
+py -3 -m pip install --user --no-cache-dir -r requirements/base.txt .
 
 # RUN THE DEMO
 cd demo

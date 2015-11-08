@@ -246,7 +246,7 @@ class Scene(object):
             player_start_position (tuple): x, y pixel coordinates
                 for the human player's starting position.
             human_player (players.HumanPlayer): --
-            npcs (List[players.Npc]): --
+            npcs (List[players.NPC]): --
             npc_sprite_group (pygame.sprite.Group): --
 
         """
@@ -387,7 +387,7 @@ class Scene(object):
             else:
                 say_text = None
 
-            npc = player.Npc(walkabout=npc_walkabout, say_text=say_text)
+            npc = player.NPC(walkabout=npc_walkabout, say_text=say_text)
             npcs.append(npc)
 
         return Scene(
@@ -500,7 +500,7 @@ class TMX(object):
         layers (list): a 3D list of tile IDs referring to a tile
             by id in a Tilesheet. This data is extrapolated from
             a CSV-format list of tile IDs.
-        npcs (List[players.Npc]): --
+        npcs (List[players.NPC]): --
 
     See Also:
         http://doc.mapeditor.org/reference/tmx-map-format/
@@ -594,7 +594,7 @@ class TMX(object):
                 walkabout = sprites.Walkabout(walkabout_name, position)
                 say_text = properties.find(xpath % 'say').attrib['value']
 
-                npc = player.Npc(walkabout=walkabout, say_text=say_text)
+                npc = player.NPC(walkabout=walkabout, say_text=say_text)
                 self.npcs.append(npc)
 
         # should use xpath before loading all npcs...
