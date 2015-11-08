@@ -1,0 +1,291 @@
+#!/usr/bin/env python
+
+"""Hypatia bootstrap script, installs everything required
+for Hypatia. Go from 0 to contributing in one command.
+
+Usage:
+    scripts/bootstrap --travis --skip-preamble
+
+    The optional --skip-preamble flag skips asking for
+    user's permission to do a list of commands.
+
+    --travis flag is for bootstraping for Travis CI.
+
+Warning:
+    Possible bug whereas you could execute this script with
+    `python3.3 scripts/install`, but since it sees `python`
+    first, it'll use that, which may be another version!
+
+    I'm pretty much banking on the fact that you know about
+    virtual environments. Though, this wouldn't be a hard
+    bug to fix.
+
+
+"""
+
+import sys
+import inspect
+import textwrap
+import platform
+import argparse
+import subprocess
+from distutils.version import StrictVersion
+
+
+class Install(object):
+    """Installation process.
+
+    Optionally execute some PREP_COMMANDS, then install the
+    `setup.py` as defined in PIP_INSTALL.
+
+    Note:
+        We do not need to know the pip command, because
+        you can simply do something like:
+
+            $ python -m pip install whatever
+
+    Constants:
+        POSSIBLE_COMMANDS_FOR_PYTHON (tuple): Hopefully one
+            of these commands work! Each string is something
+            which _hopefully_ executes on the system. Each
+            member has access to the major and minor of the
+            Python version running this script, through
+            {major} and {minor} respectively. This is because
+            the command for python can be stuff like `python3.3',
+            'py -2', etc.
+        PREP_COMMANDS (tuple): Override this to provide a tuple of
+            strings. Each string is a command to execute BEFORE
+            running the `setup.py` script.
+        PREP_COMMANDS_PYTHON_2 (tuple): Commands only to be executed
+            if the major Python version executing this script is 2.
+        PREP_COMMANDS_PYTHON_3 (tuple): Commands only to be executed
+            if the major Python version executing this script is 3.
+        PIP_INSTALL (str): This is the last thing executed, it
+            finishes the incomplete command `pip install `. This
+            value is seriously just appended to `pip install `.
+        PREAMBLE (str): A notice message to display to the user
+            before installing. This can be bypassed with the
+            --skip-preamble flag. This is displayed along with
+            the commands to be executed.
+            
+    """
+
+    PREAMBLE = ''
+    PREP_COMMANDS = tuple()
+    PREP_COMMANDS_PYTHON_2 = tuple()
+    PREP_COMMANDS_PYTHON_3 = tuple()
+    PIP_INSTALL = "."
+    # prefer specific commands first
+    POSSIBLE_COMMANDS_FOR_PYTHON = (
+                                    'python{major}.{minor}',
+                                    'python{major}',
+                                    'py -{major}',
+                                    'python',
+                                   )
+
+    @classmethod
+    def find_python_commands(cls):
+        """Find the Python commands which work.
+
+        Test using `python --version`.
+
+        """
+
+        major, minor = sys.version_info[:2]
+        these_commands_exist = []
+
+        for command in cls.POSSIBLE_COMMANDS_FOR_PYTHON:
+            command = command.format(major=major, minor=minor)
+
+            try:
+                subprocess.check_output(command + " --version", shell=True)
+
+            except subprocess.CalledProcessError as e:
+                print(e.output)
+
+                continue
+
+            these_commands_exist.append(command)
+ 
+        return these_commands_exist
+
+    @classmethod
+    def run(cls, skip_preamble=True):
+        """Run the installation procedure.
+
+        Will use the first viable Python command it finds.
+
+        """
+
+        # Determine the Python version, and thus
+        # form all of the necessary prep commands
+        # into one tuple
+        major, minor = sys.version_info[:2]
+        prep_commands = cls.PREP_COMMANDS
+
+        if major == 2 and cls.PREP_COMMANDS_PYTHON_2:
+            prep_commands = prep_commands + cls.PREP_COMMANDS_PYTHON_2
+        elif major == 3 and cls.PREP_COMMANDS_PYTHON_3:
+            prep_commands = prep_commands + cls.PREP_COMMANDS_PYTHON_3
+
+        # determine the python command to install setup.py through pip
+        python_commands = cls.find_python_commands()
+        number_of_commands_found = len(python_commands)
+
+        if number_of_commands_found == 0:
+
+            raise Exception("Could not find the Python Command!")
+
+        python_command = python_commands[0]
+        setup_command = "%s -m pip install %s" % (python_command,
+                                                  cls.PIP_INSTALL)
+
+        # The preamble displays an optional message,
+        # along with the commands to be executed. If
+        # skip_preamble is True, this step is skipped.
+        if not skip_preamble:
+            
+            if cls.PREAMBLE:
+                print(textwrap.dedent(cls.PREAMBLE))
+
+            print("The following commands are to be executed:\n")
+
+            for command in prep_commands:
+                print('  * ' + command)
+
+            print('  * ' + setup_command + '\n')
+
+            # Is the above okay (yes or no):
+            while True:
+                answer = raw_input("Is the above okay (yes or no): ")
+
+                if answer == "yes":
+
+                    break
+
+                elif answer == "no":
+                    sys.exit()
+                else:
+                    print('Please type "yes" or "no"!')
+
+
+        # If we have preparation commands to execute
+        # PRIOR to the setup.py installation, let's
+        # do them now!
+        if prep_commands:
+
+            for preparation_command in prep_commands:
+
+                try:
+                    subprocess.check_output(preparation_command, shell=True)
+                except subprocess.CalledProcessError as e:
+                    print(e.output)
+
+        # run the python command which installs Hypatia and its
+        # dependencies through pip.
+        print(subprocess.check_output(setup_command, shell=True))
+
+
+class Linuxmint(Install):
+    PREAMBLE = '''
+               Caution: This gets messy! We gotta install all the
+               dependencies for compiling Pygame!
+               '''
+    PREP_COMMANDS = [
+                     '''apt-get install python3-pip python3-dev \
+                            libsdl1.2-dev libsdl-image1.2-dev \
+                            libsdl-mixer1.2-dev libsdl-ttf2.0-dev \
+                            libsdl-gfx1.2-dev libsdl-net1.2-dev \
+                            libsdl-image1.2-dev libsdl-mixer1.2-dev \
+                            libsdl-ttf2.0-dev libsmpeg-dev libsdl1.2-dev \
+                            libportmidi-dev libswscale-dev libavformat-dev \
+                            libavcodec-dev libsdl-sge-dev \
+                            libsdl-sound1.2-dev libportmidi-dev \
+                            libsmpeg-dev''',
+                     "pip install hg+http://bitbucket.org/pygame/pygame",
+                    ]
+
+
+class Darwin(Install):
+    """Mac OS X
+
+    """
+
+    PREP_COMMANDS = [
+                     ('ruby -e "$(curl -fsSL https://raw.githubuser'
+                      'content.com/Homebrew/install/master/install)"'),
+                     "brew install homebrew/python/pygame",
+                    ]
+
+
+class Ubuntu(Install):
+    PREP_COMMANDS_PYTHON_2 = ('sudo apt-get install python-pygame python-pip',)
+    PREP_COMMANDS_PYTHON_3 = ('install python3-dev python3-numpy python3-pip',)
+
+
+class FreeBSD(Install):
+    """FreeBSD, pretty much any version.
+
+    """
+
+    PREAMBLE = '''
+               This install requires sudo. This install only 
+               works for Python 2. Will install Hypatia to 
+               the user's site packages (with pip install --user).
+               '''
+    PIP_INSTALL = "--user ."
+    PREP_COMMANDS = ['sudo pkg install -y py27-game py27-pip']
+
+
+class TravisCI(Install):
+    """Installer for Travis CI ONLY.
+
+    """
+
+    PREAMBLE = '''
+               This is only for Travis CI! You probably don't mean
+               to use this!
+               '''
+    PREP_COMMANDS = (
+                     'sudo apt-get update',
+                     '''sudo apt-get install --fix-missing mercurial \
+                             python3-dev python3-numpy libav-tools \
+                             libsdl-image1.2-dev libsdl-mixer1.2-dev \
+                             libsdl-ttf2.0-dev libsmpeg-dev \
+                             libsdl1.2-dev libportmidi-dev \
+                             libswscale-dev libavformat-dev \
+                             libavcodec-dev''',
+                     'pip install hg+http://bitbucket.org/pygame/pygame',
+                     'pip install -r requirements/travis.txt',
+                    )
+
+
+# Parse the args to find out if the user wants a specific
+# installer/target or Python version.
+parser = argparse.ArgumentParser(description='Hypatia installer')
+parser.add_argument('--travis', action='store_true', help='TravisCI install')
+parser.add_argument('--skip-preamble', action='store_true',
+                    help='Auto approve install')
+args = vars(parser.parse_args())
+
+# Do the magic
+
+# Is this a TravisCI install or should we detect version?
+if args['travis']:
+    operating_system = 'TravisCI'
+else:
+    operating_system = platform.system()
+
+    if operating_system == "Linux":
+        operating_system = platform.linux_distribution()[0]
+
+# for Class in module's classes,
+#     if Class is child of install and name equals platform detected
+#         Class.run()
+current_module = sys.modules[__name__]
+
+for name, obj in inspect.getmembers(current_module, inspect.isclass):
+
+    # TODO: this isn't testing if the obj is a child of install...
+    if name == operating_system:
+        obj.run(skip_preamble=args['skip_preamble'])
