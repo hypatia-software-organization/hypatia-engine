@@ -135,6 +135,72 @@ The command `git branch --merged` will show all branches merged into `master`.  
 - `git branch -d that-branch` **Note:** `-D` will be necessary for branches merged via `git cherry-pick -s`.
 - `git push origin --delete that-branch`
 
+### Git Tips
+
+Here are some useful Git tips and tricks for developers.
+
+#### Show the Most Commonly Useful Commands
+
+`git help everyday`
+
+#### Describe the Purpose of a Branch
+
+`git branch --edit-description`
+
+This will open your text editor so that you can describe the purpose of the branch, making it a great chance to document the overall goals and rationale for the branch and how it benefits Hypatia.
+
+##### For Maintainers
+
+All Hypatia maintainters should enable the following option in Git:
+
+`git config --global branch.mergedesc true`
+
+This will cause `git merge` to include the description of branches when merging, although maintainers will need to take one more step for that.
+
+1. Use the `--log` flag whenever running `git merge`.
+
+2. Tell Git to always use `--log` when merging in certain branches.  For example, in Hypatia one could run `git config branch.master.mergOptions "--log"` and `git config branch.develop.mergeOptions "--log"`.  This will cause all merges performed in those two branches to automatically use the `--log` option to include branch descrptions.
+
+#### Show the Most Recent Commit on Branches
+
+`git branch -vv`
+
+This only shows local branches.  Using `-avv` instead will show all branches, local and remote.
+
+#### List Merged Branches
+
+`git checkout master && git branch --merged`
+
+This will show all local branches that we have merged into `master`.  You can use `grep` and `xargs` to delete all such branches like so:
+
+`git branch --merged | grep -v '\*' | xargs -n 1 git branch -d`
+
+#### Reword the Last Commit Message
+
+`git commit -v --amend`
+
+#### Add Files/Changes to the Last Commit
+
+First use `git add` to stage the changes you want to include in the previous commit, then run:
+
+`git commit --amend -C HEAD`
+
+This is also a useful way to immediately fix a bug or problem in the most recent commit.
+
+#### List All Files Git Ignores
+
+`git ls-files --others -i --exclude-standard`
+
+#### See a "Pretty" Graph of All Branches
+
+`git log --all --decorate --oneline --graph`
+
+#### See All Changes Made in the Last Week
+
+`git log --all --since=one.week.ago`
+
+You can also use the `--no-merges` flag if you aren't interested in seeing merge commits.
+
 ## General Documentation Rules
 
   * Always explain what everything is and how it works, to the best of your understanding!
