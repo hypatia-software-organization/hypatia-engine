@@ -103,12 +103,10 @@ class WorldController(GameController):
         # map an input key to a direction enumeration,
         # so when the player is pressing that key,
         # they will be moving in that direction.
-        movement = {
-                    K_UP: constants.Direction.north,
+        movement = {K_UP: constants.Direction.north,
                     K_RIGHT: constants.Direction.east,
                     K_DOWN: constants.Direction.south,
-                    K_LEFT: constants.Direction.west,
-                   }
+                    K_LEFT: constants.Direction.west}
 
         for key, direction in movement.items():
 

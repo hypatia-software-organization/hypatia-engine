@@ -1,18 +1,14 @@
 # Contributing to Hypatia
 
-Read this *before* you make a pull request. _Hopefully_ everything a Python dev would want to know about contributing to Hypatia, e.g., style, guidelines, requirements, testing.
+This document is for Python devs to read before making contributions
+to Hypatia. When you make a _pull request_ it is assumed you have
+read this document.
 
-Before you continue, read:
+Before you continue, you need to read `LICENSE`, `README.md`,
+and `CODE-OF-CONDUCT`.
 
-  * `LICENSE`
-  * `README.md`: Everything the user needs to know
-  * `CODE-OF-CONDUCT.md`: Be compassionate and respectful
-
-## Social
-
-Hypatia has strives to be a safe place for all. Please read the `CODE-OF-CONDUCT.md`.
-
-### Contact and Communication
+Hypatia stricly enforces the `CODE-OF-CONDUCT.md`. We strive for a
+safe, healthy social environment for all women, whether cis or trans.
 
 Please communicate with our lovely team:
 
@@ -23,21 +19,12 @@ Please communicate with our lovely team:
 Lily, project mommy:
 
   * Email: lillian.lynn.lemmer@gmail.com
-  * Twitter: @LilyLemmer
+  * Twitter: @LilyLemmer (you can *really* get to know her)
 
-### Letter to Women
-
-Hey you!
-
-It's Lily, the project mommy. I just wanna say that this project is especially for you as a developer; you come first. I'm a woman who's openly lesbian and trans, I hope that reassures you that Hypatia has a welcoming, open, and safe culture.
-
-I'd like to offer you free one-on-one sessions, where I'll teach you software engineering! I'll teach you until you're making quality contributions to Hypatia! My hope is to help women develop a portfolio for a career in software engineering.
-
-I'd also like to invite you to the official, invite-only, Hypatia developer chat. We use a service called Slack to chat; you don't need to download anything. Send an email to lillian.lynn.lemmer@gmail.com requesting an invite!
-
-Let me know if you need anything.
-
-Lillian Lynn Lemmer
+You may ask Lillian for access to the private team chat. When you
+email `lillian.lynn.lemmer@gmail.com` be sure to mention why
+you're interested, a tiny bit about yourself, and maybe a Twitter,
+blog, or something!
 
 ## Quick Info
 
@@ -47,18 +34,28 @@ Lillian Lynn Lemmer
   * Use test.sh to test before you commit!
   * You'll probably want to pip install --user requirements/testing.txt
   * This repo's etc/ directory contains additional/optional tools to assist contributors
+  * Before anything is merged to `develop` you need at least one person to approve the
+    change in a pull request. The convention for showing approval for a commit is giving
+    your thumbs-up :+1:, hopefully with a comment.
+  * Complete repository review is required to merge back to `master`, this means a pull
+    request requiring the approval and input of (hopefully) all contributors. Also,
+    changes must first be tested in all supported platforms.
 
 ## Git
 
-Branch from `develop`, pull requests against `develop`.
+### Creating a New Branch
 
-  * Try to avoid large/huge commits
-  * Try to avoid imlementing multiple concepts in one commit
-  * A branch should only implement what its name describes, e.g., "add-display-settings-and-tools"
+All new branches **must** fork from `master`, e.g. `git checkout -b your-new-feature-or-fix master`.
 
-### Git Flow
+#### Rationale
 
-The general git flow of the project follows [A Successful git Branching Model](http://nvie.com/posts/a-successful-git-branching-model/). Please branch from the `develop` branch.
+The `master` branch at all times represents the most stable version of Hypatia.  All new branches must fork from `master` so that they begin with the most stable foundation possible.  This helps cut down on the number of bugs and problems that can arise from forking a branch from a less stable branch, e.g. an existing feature branch; the new branch will inherit any problems or conflicts of that branch.  By forking all branches from `master` those branches are less likely to inherit any problems than if they forked from anywhere else.
+
+### General Practices
+
+* Try to avoid large/huge commits
+* Try to avoid imlementing multiple concepts in one commit
+* A branch should only implement what its name describes, e.g., "add-display-settings-and-tools"
 
 ### Git Messages
 
@@ -69,6 +66,64 @@ Commit messages must be as explanatory as possible.  Any developer should be abl
 If your commit is a bug-fix then try to find the commit which introduced the bug and reference that in your message.  The preferred format is `first eight digits of the SHA-1 (The Commit's First Line)`.  [Here is an example](https://github.com/hypatia-engine/hypatia/commit/b52c3345ae8e312017c2a1cf21793fdbc63b2493) demonstrating how to refer to previous commits.  Note well that GitHub automatically creates links to commits you reference in this way.
 
 If your commit relates to a GitHub issue then reference that issue in the message by writing `GitHub-Issue: #NNN` where `NNN` is the issue number.  [Here is an example](https://github.com/hypatia-engine/hypatia/commit/04d64aa1c76d1958d934c9d64e72a6928ab6466f) of such references.  Again, note well that GitHub turns these references into links.  The threads for those issues will also receive a link back to the commit.
+
+### Merging Branches
+
+#### Getting Reviews and Testing
+
+A branch is not acceptable for merging until one of the "core contributors" has reviewed and tested the branch.  In this context "core contributors" refers to the people with read/write permissions on the official repository.  At this time of writing those people are:
+
+- Lillian Lemmer
+- Alice Jenkinson
+- Eric James Michael Ritz
+
+#### Merging Branches in Preparation for Updating Master
+
+All branches deemed acceptable for merging into Hypatia are first merged into the `develop` branch.  The `develop` branch is always forked from `master`.  It represents "the next version of `master`", i.e. what `master` will become after all merging and integration testing is complete.  These are the steps that the "core contributors" must follow for merging branches in preparation for updating `master`.
+
+1. Create `develop` if it does not already exist, i.e. `git branch develop master`.
+
+2. `git checkout develop`
+
+3. For each branch `foo` that is acceptable for merging, first run `git checkout develop` to switch to the `develop` branch.  If the branch `foo` contains only a single commit: `git cherry-pick -s foo`.  If the branch `foo` contains more than one commit: `git merge --no-ff --edit foo`.  The purpose of these two commands is to add metadata to the commits indicating that the core contributor performing the merge has "signed off" on the branch, i.e. that contributor takes full responsibility for having tested and reviewed the branch in question.
+
+4. `git push origin develop` so that everyone may test the proposed changes.
+
+##### Rationale for Merging Process
+
+Using `git cherry-pick -s foo` for a branch that contains only one commit avoids creating a merge commit, which is unnecessary noise for such branches.  If it is necessary to revert a branch in the future then we only need a single commit to revert.  For branches containing only one commit we do not need a merge commit to revert; we can simply revert the commit itself.  For branches containing more than one commit, `git merge --no-ff --edit foo` guarantees that we will have a merge commit that we can use with `git revert` at any point in the future to "unhook" that branch from the repository, thus undoing all of its changes.  The `-s` flag for `git cherry-pick` and the `--edit` flag for `git merge` gives the core contributors the chance to sign-off on the branch, indicating they have reviewed and tested the branch and that they accept responsibility for the quality of that branch meeting the standards of the project.
+
+#### Merging All Changes Into Master
+
+Once all branches deemed acceptable for merging are in `develop` then all developers should `git checkout develop` and test the changes as much as possible.  Once satisfied with their quality then one of the core contributors updates `master` with the following commands:
+
+    git checkout master
+    git merge --ff-only develop
+
+##### Rationale for `--ff-only`
+
+A "fast-forward" merge in Git is a merge which **does not** create a merge commit.  Using `--ff-only` will reject the merge if it cannot be done without creating a merge commit.  The reason this flag is mandatory is that if we cannot fast-forward merge `develop` into `master` then that indicates there are merge conflicts which are either unresolved or need to be re-reviewed.  To put it another way, `git merge --ff-only develop` guarantees that Git can update `master` "cleanly" by simply updating `master` to point to the same commit as `develop`.
+
+#### Tagging Master for a New Release
+
+After merging `develop` into `master` it may be time to tag `master` as a new version for release.  The commands for this are:
+
+    git checkout master
+    git tag -s v0.4.0
+
+Here `v0.4.0` is only an example tag name.  *Only Lillian can run these commands.*  That is because the `-s` flag to `git tag` will sign the tag with her GPG key, which other developers can use to verify the validity and authenticity of the tag.  As the project lead of Hypatia, Lillian is the only person with authority to use `git tag -s`.  **No other developers must ever use `git tag -s` under any circumstances.**  However, using `git tag` without `-s` is fine, which developers can use to create local "lightweight" tags if needed to help development.
+
+#### Pushing Updates to Master and Preparing for the Next Development Cycle
+
+- `git fetch origin --prune`
+- `git checkout master`
+- `git push origin master --tags`
+- `git branch -d develop && git branch develop master`
+
+The command `git branch --merged` will show all branches merged into `master`.  For each such branch:
+
+- `git branch -d that-branch` **Note:** `-D` will be necessary for branches merged via `git cherry-pick -s`.
+- `git push origin --delete that-branch`
 
 ## General Documentation Rules
 
@@ -522,10 +577,8 @@ The requirements files installable by `pip`. Notes on the files:
 
 |Requirements File|You'd want to use if...                        |
 |-----------------|-----------------------------------------------|
-|base.txt         |ALWAYS!                                        |
-|python2.txt      |You use Python 2.x!                            |
 |testing.txt      |You want to test and/or contribute to the code!|
-|travis.txt       |NEVER                                          |
+|travis.txt       |NEVER, this is for Travis CI                   |
 |distrib.txt      |Distributing new release on PyPi               |
 
 ### tests/

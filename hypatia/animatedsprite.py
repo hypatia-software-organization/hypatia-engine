@@ -707,12 +707,10 @@ class AnimatedSprite(pygame.sprite.Sprite):
                 else:
                     frame_anchors = None
 
-                frame = Frame(
-                              surface=frame_sprite,
+                frame = Frame(surface=frame_sprite,
                               start_time=time_position,
                               duration=duration,
-                              anchors=frame_anchors
-                             )
+                              anchors=frame_anchors)
                 frames.append(frame)
                 frame_index += 1
                 time_position += duration
@@ -749,11 +747,9 @@ class AnimatedSprite(pygame.sprite.Sprite):
 
         image_as_string = pil_image.convert('RGBA').tobytes()
 
-        return pygame.image.fromstring(
-                                       image_as_string,
+        return pygame.image.fromstring(image_as_string,
                                        pil_image.size,
-                                       'RGBA'
-                                      )
+                                       'RGBA')
 
     def convert_alpha(self):
         """A runtime method for optimizing all of the

@@ -136,12 +136,10 @@ class TestDirection(object):
         """
 
         # Cardinals: North, East, South, West
-        assert (
-                constants.Direction.north,
+        assert (constants.Direction.north,
                 constants.Direction.east,
                 constants.Direction.south,
-                constants.Direction.west
-               ) == constants.Direction.cardinal()
+                constants.Direction.west) == constants.Direction.cardinal()
 
     def test_direction_aliases(self):
         """Test that the various aliases for directions work, i.e.,

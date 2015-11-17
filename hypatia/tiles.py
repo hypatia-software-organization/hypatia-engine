@@ -367,11 +367,10 @@ class Tilesheet(object):
 
         # path to the zip containing tilesheet.png and tilesheet.ini
         resource = resources.Resource('tilesheets', tilesheet_name)
-        zip_path = os.path.join(
-                                'resources',
+        zip_path = os.path.join('resources',
                                 'tilesheets',
-                                tilesheet_name + '.zip'
-                               )
+                                tilesheet_name + '.zip')
+
         tilesheet_surface = pygame.image.load(resource['tilesheet.png'])
         config = resource['tilesheet.ini']
 

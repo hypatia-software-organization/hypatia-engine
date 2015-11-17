@@ -14,11 +14,9 @@ __email__ = "lillian.lynn.lemmer@gmail.com"
 __status__ = "Development"
 
 # specifically code contributors
-__contributors__ = [
-                    "Lillian Lemmer",
+__contributors__ = ["Lillian Lemmer",
                     "Eric James Michael Ritz",
                     "Brian Houston Morrow",
-                    "William D. Jones",
-                   ]
+                    "William D. Jones"]
 
-__version__ = '0.3.3'
+__version__ = '0.3.4'

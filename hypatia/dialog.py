@@ -70,11 +70,9 @@ class DialogBox(object):
         y_pos = 0
 
         for line in message_lines:
-            text_surface = self.font.render(
-                                            line,
+            text_surface = self.font.render(line,
                                             False,
-                                            (0, 0, 0)
-                                           )
+                                            (0, 0, 0))
             full_surface.blit(text_surface, (0, y_pos))
             y_pos += self.character_size[1]
 
