@@ -39,6 +39,7 @@ from hypatia import constants
 from hypatia import physics
 
 
+@enum.unique
 class NoResponseReason(enum.Enum):
     """Enumeration of reasons Actor.get_response()
     could fail and raise NoResponse.
@@ -48,7 +49,27 @@ class NoResponseReason(enum.Enum):
     no_say_text = "Actor cannot respond."
 
 
-class NoResponse(Exception):
+class ActorException(Exception):
+    """The base class for all exceptions related to Actors.
+
+    See Also:
+        :class:`Actor`
+    """
+    pass
+
+
+class ActorCannotTalk(ActorException):
+    """When an actor cannot talk.
+
+    See Also:
+        :class:`Actor`
+        :meth:`Actor.say()`
+
+    """
+    pass
+
+
+class NoActorResponse(ActorException):
     """When an Actor fails to respond (say).
 
     Attribs:
@@ -73,8 +94,7 @@ class NoResponse(Exception):
                 NoResponseReason enumeration.
 
         """
-
-        super(NoResponse, self).__init__(reason_enum)
+        super(NoActorResponse, self).__init__(reason_enum)
 
         # Check for a valid reason or fail.
         if isinstance(reason_enum, NoResponseReason):
@@ -134,11 +154,14 @@ class Actor(object):
         Is it possible to set this property to a new value.
 
         Raises:
-            AttributeError: If the new value is not a valid object
-                of the :class:`constants.Direction` class.
+            AttributeError: If the instance has no `walkabout` property.
             TypeError: If one tries to delete this property
 
         """
+
+        if self.walkabout is None:
+
+            raise AttributeError("Actor has no 'walkabout' property")
 
         return self.walkabout.direction
 
@@ -152,9 +175,14 @@ class Actor(object):
 
         Raises:
             AttributeError: If the new value is not a valid object
-                of the :class:`constants.Direction` class.
+                of the :class:`constants.Direction` class or if
+                the actor has no `walkabout` property.
 
         """
+
+        if self.walkabout is None:
+
+            raise AttributeError("Actor has no 'walkabout' property")
 
         if not isinstance(new_direction, constants.Direction):
 
@@ -188,8 +216,9 @@ class Actor(object):
                 attribute will be printed to this.
 
         Raises:
-            NoResponse: This NPC has no response for the
+            NoActorResponse: This NPC has no response for the
                 included reason.
+            AttributeError: The actor has no `walkabout` property.
 
         Notes:
             Even if this actor doesn't say anything, it will
@@ -200,6 +229,10 @@ class Actor(object):
 
         """
 
+        if self.walkabout is None:
+
+            raise AttributeError("Actor has no 'walkabout' property")
+
         self.walkabout.direction = (constants.Direction.
                                     opposite(at_direction))
 
@@ -207,7 +240,7 @@ class Actor(object):
             dialogbox.set_message(self.say_text)
         else:
 
-            raise NoResponse(NoResponseReason.no_say_text)
+            raise NoActorResponse(NoResponseReason.no_say_text)
 
     def talk(self, npcs, dialogbox):
         """Trigger another actor's :meth:`actor.Actor.say()` if
@@ -226,7 +259,16 @@ class Actor(object):
                 another actor will print to if they have
                 something to say.
 
+        Raises:
+            ActorCannotTalk: If the actor cannot speak to
+                the `npcs` around.
+
         """
+
+        if self.walkabout is None:
+
+            raise ActorCannotTalk(("Actor has no 'direction' to face "
+                                   "when talking."))
 
         # get the current direction, check a bit in front with a rect
         # to talk to npc if collide
@@ -251,9 +293,9 @@ class Actor(object):
                 # the good feature of having a reason for an
                 # NPC not being able to respond. This currently
                 # does nothing...
-                except NoResponse as no_response:
+                except NoActorResponse as no_response:
 
-                    if response_failure is NoResponse.no_say_text:
+                    if response_failure is NoResponseReason.no_say_text:
                         # The NPC we're seeking a response from lacks
                         # a value for say text.
                         pass

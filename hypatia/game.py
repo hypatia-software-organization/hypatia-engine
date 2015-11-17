@@ -179,18 +179,14 @@ class Game(object):
 
         # render each npc walkabout
         for npc in self.scene.npcs:
-            npc.walkabout.blit(
-                               self.screen.clock,
+            npc.walkabout.blit(self.screen.clock,
                                self.viewport.surface,
-                               self.viewport.rect.topleft
-                              )
+                               self.viewport.rect.topleft)
 
         # finally human and rest map layers last
-        self.scene.human_player.walkabout.blit(
-                                               self.screen.clock,
+        self.scene.human_player.walkabout.blit(self.screen.clock,
                                                self.viewport.surface,
-                                               self.viewport.rect.topleft
-                                              )
+                                               self.viewport.rect.topleft)
 
         for i, layer in enumerate(self.scene.tilemap.layer_images[1:], 1):
             self.viewport.blit(layer)
@@ -308,12 +304,10 @@ class Scene(object):
         tmx = TMX(file_path)
         human_player = cls.create_human_player(tmx.player_start_position)
 
-        return Scene(
-                     tilemap=tmx.tilemap,
+        return Scene(tilemap=tmx.tilemap,
                      player_start_position=tmx.player_start_position,
                      human_player=human_player,
-                     npcs=tmx.npcs
-                    )
+                     npcs=tmx.npcs)
 
     @classmethod
     def from_resource(self, scene_name):
@@ -390,12 +384,10 @@ class Scene(object):
             npc = player.Npc(walkabout=npc_walkabout, say_text=say_text)
             npcs.append(npc)
 
-        return Scene(
-                     tilemap=tilemap,
+        return Scene(tilemap=tilemap,
                      player_start_position=player_start_position,
                      human_player=human_player,
-                     npcs=npcs
-                    )
+                     npcs=npcs)
 
     def collide_check(self, rect):
         """Returns True if there are collisions with rect.
@@ -455,18 +447,14 @@ class Scene(object):
         # render each npc walkabout
         # should use group draw
         for npc in self.npcs:
-            npc.walkabout.blit(
-                               clock,
+            npc.walkabout.blit(clock,
                                viewport.surface,
-                               viewport.rect.topleft
-                              )
+                               viewport.rect.topleft)
 
         # finally human and rest map layers last
-        self.human_player.walkabout.blit(
-                                         clock,
+        self.human_player.walkabout.blit(clock,
                                          viewport.surface,
-                                         viewport.rect.topleft
-                                        )
+                                         viewport.rect.topleft)
 
         for i, layer in enumerate(self.tilemap.layer_images[1:], 1):
             viewport.blit(layer)

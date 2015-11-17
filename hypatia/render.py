@@ -56,10 +56,8 @@ class Screen(object):
         self.time_elapsed_milliseconds = 0
         display_info = pygame.display.Info()
         self.screen_size = (display_info.current_w, display_info.current_h)
-        self.screen = pygame.display.set_mode(
-                                              self.screen_size,
-                                              FULLSCREEN | DOUBLEBUF
-                                             )
+        self.screen = pygame.display.set_mode(self.screen_size,
+                                              FULLSCREEN | DOUBLEBUF)
         self.filters = filters
 
     def update(self, surface):
@@ -166,11 +164,9 @@ class Viewport(object):
 
         """
 
-        self.surface.blit(
-                          surface,
+        self.surface.blit(surface,
                           (0, 0),
-                          self.rect
-                         )
+                          self.rect)
 
 
 if __name__ == "__main__":

@@ -1,7 +1,3 @@
-# We install Python 2 because it is the only version which requires
-# additional packages to work, and it installs base.txt
--r python2.txt
-
 # This only installs the testing software that devs would use
 -r testing.txt
 

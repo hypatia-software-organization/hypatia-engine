@@ -7,6 +7,9 @@
 # test.sh is more comprehensive, but this is a script
 # I slapped together for fixing errors related to
 # Windows.
+#
+# Apparently `read -p` doesn't work so hot in another
+# version of git bash I'm using?
 
 read -p "Press [Enter] to uninstall then install hypatia_engine..."
 # uninstall

@@ -36,29 +36,30 @@ class TestActor(object):
 def test_no_response():
     """Test the exception class.
 
-    Also See:
-        * actor.NoResponse
+    See Also:
+        * actor.NoActorResponse
         * actor.NoResponseReason
+        * actor.ActorCannotTalk
 
     """
 
     # If the response reason is invalid a typeerror should be raised
     with pytest.raises(TypeError):
 
-        raise actor.NoResponse(2)
+        raise actor.NoActorResponse(2)
 
     # Give NoResponse a valid reason and see if it raises NoResponse
-    with pytest.raises(actor.NoResponse):
+    with pytest.raises(actor.NoActorResponse):
 
-            raise actor.NoResponse(actor.NoResponseReason.no_say_text)
+            raise actor.NoActorResponse(actor.NoResponseReason.no_say_text)
 
     # Make sure the reason attribute is accessible and is set
     # to the supplied and valid reason.
     try:
 
-        raise actor.NoResponse(actor.NoResponseReason.no_say_text)
+        raise actor.NoActorResponse(actor.NoResponseReason.no_say_text)
 
-    except actor.NoResponse as no_response:
+    except actor.NoActorResponse as no_response:
 
         assert no_response.reason == actor.NoResponseReason.no_say_text
 
