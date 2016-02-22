@@ -1,8 +1,6 @@
 # Hypatia 0.3.6 (alpha)
 
-![Hypatia 0.3.6](http://engine.hypatia.software/assets/logotype-dark.png)
-
-[![GitHub license](https://img.shields.io/github/license/hypatia-software-organization/hypatia-engine.svg?style=flat-square)](https://raw.githubusercontent.com/hypatia-software-organization/hypatia-engine/master/LICENSE)
+[![GitHub license](https://img.shields.io/github/license/hypatia-software-org/hypatia-engine.svg?style=flat-square)](https://raw.githubusercontent.com/hypatia-software-org/hypatia-engine/master/LICENSE)
 [![PyPI Version](https://img.shields.io/pypi/v/hypatia_engine.svg?style=flat-square)](https://pypi.python.org/pypi/hypatia_engine/)
 [![Travis](https://img.shields.io/travis/hypatia-software-organization/hypatia-engine.svg?style=flat-square)](https://travis-ci.org/hypatia-software-organization/hypatia-engine)
 [![Code Climate](https://img.shields.io/codeclimate/github/lillian-lemmer/hypatia.svg?style=flat-square)](https://codeclimate.com/github/hypatia-software-organization/hypatia-engine)
@@ -17,7 +15,7 @@ Create games like
 
 The included demo game (`demo/game.py`) in action:
 
-![The demo game in action.](http://engine.hypatia.software/assets/demo-2015-11-07.gif)
+![The demo game in action.](https://enginedothypatiadotsoftware.files.wordpress.com/2016/01/demo-2015-11-07-1.gif)
 
 ## What makes this project special?
 

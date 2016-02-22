@@ -447,10 +447,9 @@ class AnimatedSprite(pygame.sprite.Sprite):
         image (pygame.Surface): Current surface belonging to
             the active frame. Set once per tick through
             the AnimatedSprite.update() method.
-        rect (pygame.Rect): Represents the AnimatedSprite's
-            position on screen. Not an absolute position;
-            relative position. Updated once per tick, see
-            the AnimatedSprite.update() method.
+        rect (pygame.Rect): Does not reflect position, only
+            area. Updated once per tick, to reflect current
+            frame's rect, in AnimatedSprite.update().
         active_frame_index (int): Frame # which is being
             rendered/to be rendered. Also updated once per
             tick, see the AnimatedSprite.update() method.
@@ -604,7 +603,7 @@ class AnimatedSprite(pygame.sprite.Sprite):
 
         return AnimatedSprite(frames)
 
-    def update(self, clock, absolute_position, viewport):
+    def update(self, clock):
         """Manipulate the state of this AnimatedSprite, namely
         the on-screen/viewport position (not absolute) and
         using the clock to do animation manipulations.
@@ -623,10 +622,6 @@ class AnimatedSprite(pygame.sprite.Sprite):
         Args:
             clock (pygame.time.Clock): THE game clock, typically
                 found as the attribute Game.screen.clock.
-            absolute_position (tuple[int]): (x, y) pixel position
-                of this AnimatedSprite on the map--absolute
-                position. Meaning this could be outside of the
-                current viewport area.
 
         """
 
@@ -647,13 +642,8 @@ class AnimatedSprite(pygame.sprite.Sprite):
 
         image_size = self.image.get_size()
 
-        # NOTE: temporarily disabling this until i fully implement
-        # absolute_position... in our current setup we never
-        # touch the rect of frame surfaces, only the walkabout
-        # relative_position = absolute_position.relative(viewport)
-        relative_position = (0, 0)
-
-        self.rect = pygame.rect.Rect(relative_position, image_size)
+        # we're only using self.rect for size for now...
+        self.rect = pygame.rect.Rect((0, 0), image_size)
 
         self.active_frame = self.frames[self.active_frame_index]
 
@@ -751,7 +741,7 @@ class AnimatedSprite(pygame.sprite.Sprite):
                                        pil_image.size,
                                        'RGBA')
 
-    def convert_alpha(self):
+    def convert(self):
         """A runtime method for optimizing all of the
         frame surfaces of this animation.
 

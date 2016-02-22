@@ -212,7 +212,7 @@ class Direction(enum.Enum):
 
     # NOTE: should be static method?
     @classmethod
-    def cardinal(cls):
+    def cardinals(cls):
         """Return a tuple of the cardinal directions in the order:
         North, East, South, West.
 

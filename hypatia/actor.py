@@ -120,7 +120,6 @@ class Actor(object):
       objects but the implementation does not prevent this.
 
     Attributes:
-        walkabout (animations.Walkabout): --
         direction (constants.Direction): --
 
     See Also:
@@ -128,13 +127,10 @@ class Actor(object):
 
     """
 
-    def __init__(self, walkabout=None, say_text=None, velocity=None):
+    def __init__(self, pygame_sprite=None, say_text=None, velocity=None):
         """Constructs a new Actor.
 
         Args:
-            walkabout (Optional[animations.Walkabout]): Optionally
-                set a walkabout property, which will graphically
-                represent the actor.
             say_text (Optional[str]): Optionally set the text which
                 is displayed when this actor's :meth:`Actor.say()`
                 is called.
@@ -142,11 +138,45 @@ class Actor(object):
 
         """
 
-        self.walkabout = walkabout
+        self.pygame_sprite = pygame_sprite
         self.say_text = say_text
         self.velocity = velocity or physics.Velocity()
 
+    def requires_pygame_sprite_direction(function):
+        """Use as a decorator on methods which require
+        pygame_sprite to have a direction attribute.
+
+        If you use this inside of the Actor class, use it
+        like this:
+
+            >>> @requires_pygame_sprite_direction
+            ... def some_method(self, blah):
+            ...     pass
+
+        Raises:
+            AttributeError: Attempted to perform a
+                direction-specific action without
+                a "direction" attribute.
+
+        """
+
+        def wrapped_function(*args, **kwargs):
+
+            if (self.pygame_sprite is None or
+                not hasattr(self.pygame_sprite, "direction")):
+                
+                message = ("%s may only be used by Actors with a "
+                           "pygame.Sprite which has a `direction` attribute"
+                           % function.__name__)
+
+                raise AttributeError(message)
+
+            return function(*args, **kwargs)
+
+        return wrapped_function
+
     @property
+    @requires_pygame_sprite_direction
     def direction(self):
         """An instance of :class:`constants.Direction`
 
@@ -154,18 +184,16 @@ class Actor(object):
         Is it possible to set this property to a new value.
 
         Raises:
-            AttributeError: If the instance has no `walkabout` property.
+            AttributeError: If the instance has no
+                `pygame_sprite` property.
             TypeError: If one tries to delete this property
 
         """
 
-        if self.walkabout is None:
-
-            raise AttributeError("Actor has no 'walkabout' property")
-
-        return self.walkabout.direction
+        return self.pygame_sprite.direction
 
     @direction.setter
+    @requires_pygame_sprite_direction
     def direction(self, new_direction):
         """Set the direction this actor is facing.
 
@@ -176,13 +204,9 @@ class Actor(object):
         Raises:
             AttributeError: If the new value is not a valid object
                 of the :class:`constants.Direction` class or if
-                the actor has no `walkabout` property.
+                the actor has no `pygame_sprite` property.
 
         """
-
-        if self.walkabout is None:
-
-            raise AttributeError("Actor has no 'walkabout' property")
 
         if not isinstance(new_direction, constants.Direction):
 
@@ -190,9 +214,10 @@ class Actor(object):
                                   "constants.Direction value"))
 
         else:
-            self.walkabout.direction = new_direction
+            self.pygame_sprite.direction = new_direction
 
     @direction.deleter
+    @requires_pygame_sprite_direction
     def direction(self):
         """You are not allowed to delete the direction of an Actor.
 
@@ -203,6 +228,11 @@ class Actor(object):
 
         raise TypeError("Cannot delete the 'direction' of an Actor")
 
+    def has_pygame_image_direction(self):
+
+        return self.pygame_sprite and hasattr(self.pygame_sprite, "direction")
+
+    @requires_pygame_sprite_direction
     def get_response(self, at_direction, dialogbox):
         """Respond to an NPC in the direction of at_direction. Change
         this actor's direction. Display this actor's say_text attribute
@@ -218,7 +248,7 @@ class Actor(object):
         Raises:
             NoActorResponse: This NPC has no response for the
                 included reason.
-            AttributeError: The actor has no `walkabout` property.
+            AttributeError: The actor has no `pygame_sprite` property.
 
         Notes:
             Even if this actor doesn't say anything, it will
@@ -229,12 +259,9 @@ class Actor(object):
 
         """
 
-        if self.walkabout is None:
-
-            raise AttributeError("Actor has no 'walkabout' property")
-
-        self.walkabout.direction = (constants.Direction.
-                                    opposite(at_direction))
+        if self.has_pygame_image_direction():
+            self.pygame_sprite.direction = (constants.Direction.
+                                            opposite(at_direction))
 
         if self.say_text:
             dialogbox.set_message(self.say_text)
@@ -242,6 +269,7 @@ class Actor(object):
 
             raise NoActorResponse(NoResponseReason.no_say_text)
 
+    @requires_pygame_sprite_direction
     def talk(self, npcs, dialogbox):
         """Trigger another actor's :meth:`actor.Actor.say()` if
         they are immediately *in front* of this actor.
@@ -265,21 +293,18 @@ class Actor(object):
 
         """
 
-        if self.walkabout is None:
-
-            raise ActorCannotTalk(("Actor has no 'direction' to face "
-                                   "when talking."))
-
         # get the current direction, check a bit in front with a rect
         # to talk to npc if collide
-        facing = self.walkabout.direction
+        facing = self.pygame_sprite.direction
 
         # The pixel offset which acts as the collision boundary
         # for checking if there is an actor to get a response from
         # in front of this actor.
         disposition = constants.Direction.disposition(facing)
 
-        talk_rect = self.walkabout.rect.copy()
+        # NOTE: INCORRECT. ALL POSITIONAL DATA BELONGS IN
+        # ACTOR.
+        talk_rect = self.pygame_sprite.rect.copy()
         talk_rect.move_ip(disposition)
 
         for npc in npcs:

@@ -15,8 +15,9 @@ import pytest
 
 from hypatia import actor
 from hypatia import physics
+from hypatia import resources
 from hypatia import constants
-from hypatia import sprites
+from hypatia import contextsprite
 
 try:
     os.chdir('demo')
@@ -71,8 +72,9 @@ def test_actor():
 
     """
 
-    walkabout = sprites.Walkabout('debug')
+    resource_dict = resources.get_resource_dict('walkabouts', 'slime')
+    walkabout = contextsprite.ContextSprite.from_files_dict(resource_dict)
     velocity = physics.Velocity(10, 10)
-    an_actor = actor.Actor(walkabout=walkabout,
+    an_actor = actor.Actor(pygame_sprite=walkabout,
                            say_text='Hello, world!',
                            velocity=velocity)

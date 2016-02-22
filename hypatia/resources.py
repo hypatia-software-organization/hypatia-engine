@@ -24,146 +24,117 @@ import pygame
 from hypatia.animatedsprite import AnimatedSprite
 
 
-class Resource(object):
-    """A zip archive in the resources directory, located by
-    supplying a resource category and name. Files are stored
-    as a str, BytesIO, PygAnimation, or ConfigParser, in a
-    dictionary. Files are referenced by filepath/filename.
+def get_resource_dict(resource_category, resource_name):
+    """Load a resource ZIP using a category and zip name.
 
-    Attributes:
-        files (dict): Key is file name, value can be one of str,
-            BytesIO, PygAnim, or ConfigParser objects.
-
-    Example:
-        >>> from hypatia import animatedsprite as anim
-        >>> resource = Resource('walkabouts', 'debug')
-        >>> 'only.gif' in resource
-        True
-        >>> isinstance(resource['only.gif'], anim.AnimatedSprite)
-        True
-        >>> resource = Resource('scenes', 'debug')
-        >>> resource['tilemap.txt'].startswith('debug')
-        True
+    Args:
+        resource_category (str): E.g., tilesheets, walkabouts.
+        resource_name (str): E.g., debug.
 
     """
 
-    def __init__(self, resource_category, resource_name):
-        """Load a resource ZIP using a category and zip name.
+    # The default path for a resource is:
+    #   ./resource_category/resource_name
+    # We'll be looking for an archive or directory that
+    # looks something like these examples:
+    #   * ./resources/walkabouts/hat
+    #   * ./resources/scenes/debug.zip
+    # Keep in mind that directories are chosen over
+    # zip archives (if the names are the same).
+    path = os.path.join('resources',
+                        resource_category,
+                        resource_name)
 
-        Args:
-            resource_category (str): E.g., tilesheets, walkabouts.
-            resource_name (str): E.g., debug.
+    # Once files have been collected from the aforementioned
+    # path, the files will be passed through their respective
+    # file_handler, if available for the given file extension.
+    file_handlers = {
+        '.ini': load_ini,
+        '.gif': load_gif,
+        '.png': load_png,
+        '.txt': load_txt,
+    }
 
-        """
+    # 1. Create a dictionary, where the key is the file name
+    # (including extension) and the value is the result
+    # of using x.open(path).read().
+    files = {}
 
-        # The default path for a resource is:
-        #   ./resource_category/resource_name
-        # We'll be looking for an archive or directory that
-        # looks something like these examples:
-        #   * ./resources/walkabouts/hat
-        #   * ./resources/scenes/debug.zip
-        # Keep in mind that directories are chosen over
-        # zip archives (if the names are the same).
-        path = os.path.join('resources',
-                            resource_category,
-                            resource_name)
+    # choose between loading as an unpacked directory, or a zip file.
+    # unpacked takes priority.
+    if os.path.isdir(path):
 
-        # Once files have been collected from the aforementioned
-        # path, the files will be passed through their respective
-        # file_handler, if available for the given file extension.
-        file_handlers = {
-            '.ini': load_ini,
-            '.gif': load_gif,
-            '.png': load_png,
-            '.txt': load_txt,
-        }
-
-        # 1. Create a dictionary, where the key is the file name
-        # (including extension) and the value is the result
-        # of using x.open(path).read().
-        files = {}
-
-        # choose between loading as an unpacked directory, or a zip file.
-        # unpacked takes priority.
-        if os.path.isdir(path):
-
-            # go through each file in the supplied path, making an
-            # entry in the files dictionary, whose value is the
-            # file data (bytesio) and key is file name.
-            for file_name in os.listdir(path):
-                file_path = os.path.join(path, file_name)
-                file_data = open(file_path, "rb").read()
-
-                files[file_name] = file_data
-
-        # we're dealing with a zip file for our resources
-        else:
-
-            with zipfile.ZipFile(path + ".zip") as zip_file:
-
-                for file_name in zip_file.namelist():
-
-                    # because namelist will also generate
-                    # the directories
-                    if not file_name:
-
-                        continue
-
-                    file_data = zip_file.open(file_name).read()
-                    files[file_name] = file_data
-
-        # 2. "Prepare" the "raw file data" from the files
-        # dictionary we just created. If a given file's
-        # file extension is in file_handlers, the data
-        # will be updated by an associated function.
-        for file_name in files.keys():
-            file_data = files[file_name]
-            file_extension = os.path.splitext(file_name)[1]
-
-            # if there is a known "handler" for this extension,
-            # we want the file data for this file to be the output
-            # of said handler
-            if file_extension in file_handlers:
-                file_data = file_handlers[file_extension](files, file_name)
+        # go through each file in the supplied path, making an
+        # entry in the files dictionary, whose value is the
+        # file data (bytesio) and key is file name.
+        for file_name in os.listdir(path):
+            file_path = os.path.join(path, file_name)
+            file_data = open(file_path, "rb").read()
 
             files[file_name] = file_data
 
-        self.files = files
+    # we're dealing with a zip file for our resources
+    else:
 
-    def __getitem__(self, file_name):
+        with zipfile.ZipFile(path + ".zip") as zip_file:
 
-        return self.files[file_name]
+            for file_name in zip_file.namelist():
 
-    def __contains__(self, item):
+                # because namelist will also generate
+                # the directories
+                if not file_name:
 
-        return item in self.files
+                    continue
 
-    def get_type(self, file_extension):
-        """Return a dictionary of files which have the file extension
-        specified. Remember to include the dot, e.g., ".gif"!
+                file_data = zip_file.open(file_name).read()
+                files[file_name] = file_data
 
-        Arg:
-            file_extension (str): the file extension (including dot) of
-                the files to return.
+    # 2. "Prepare" the "raw file data" from the files
+    # dictionary we just created. If a given file's
+    # file extension is in file_handlers, the data
+    # will be updated by an associated function.
+    for file_name in files.keys():
+        file_data = files[file_name]
+        file_extension = os.path.splitext(file_name)[1]
 
-        Warning:
-            Remember to include the dot in the file extension, e.g., ".gif".
+        # if there is a known "handler" for this extension,
+        # we want the file data for this file to be the output
+        # of said handler
+        if file_extension in file_handlers:
+            file_data = file_handlers[file_extension](files, file_name)
 
-        Returns:
-            dict|None: {file name: file content} of files which have the
-                file extension specified. If no files match,
-                None is returned.
+        files[file_name] = file_data
 
-        """
+    return files
 
-        matching_files = {}
 
-        for file_name, file_content in self.files.items():
+# NOTE: please update
+def get_type(self, file_extension):
+    """Return a dictionary of files which have the file extension
+    specified. Remember to include the dot, e.g., ".gif"!
 
-            if os.path.splitext(file_name)[1] == file_extension:
-                matching_files[file_name] = file_content
+    Arg:
+        file_extension (str): the file extension (including dot) of
+            the files to return.
 
-        return matching_files or None
+    Warning:
+        Remember to include the dot in the file extension, e.g., ".gif".
+
+    Returns:
+        dict|None: {file name: file content} of files which have the
+            file extension specified. If no files match,
+            None is returned.
+
+    """
+
+    matching_files = {}
+
+    for file_name, file_content in self.files.items():
+
+        if os.path.splitext(file_name)[1] == file_extension:
+            matching_files[file_name] = file_content
+
+    return matching_files or None
 
 
 def load_png(files, file_name):
